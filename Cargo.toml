@@ -1,0 +1,19 @@
+[package]
+name = "nmap_xml_parser"
+description = "Parse Nmap XML output into Rust"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Ayrx/nmap_xml_parser"
+version = "0.1.0"
+authors = ["Terry Chia <terrycwk1994@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+roxmltree = "0.11.0"
+thiserror = "1.0.16"
+strum = "0.18.0"
+strum_macros = "0.18.0"
+
+[dev-dependencies]
+lazy_static = "1.4.0"
