@@ -5,7 +5,7 @@ use strum_macros::{Display, EnumString};
 
 use crate::Error;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PortInfo {
     pub ports: Vec<Port>,
 }
@@ -26,7 +26,15 @@ impl PortInfo {
     }
 }
 
-#[derive(Debug, PartialEq)]
+impl IntoIterator for PortInfo {
+    type Item = Port;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.ports.into_iter()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Port {
     pub protocol: PortProtocol,
     pub port_number: u16,
@@ -74,7 +82,7 @@ impl Port {
     }
 }
 
-#[derive(EnumString, Display, Debug, PartialEq)]
+#[derive(Clone, EnumString, Display, Debug, PartialEq)]
 pub enum PortProtocol {
     #[strum(serialize = "ip")]
     Ip,
@@ -86,7 +94,7 @@ pub enum PortProtocol {
     Sctp,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PortStatus {
     pub state: PortState,
     pub reason: String,
@@ -122,7 +130,7 @@ impl PortStatus {
     }
 }
 
-#[derive(EnumString, Display, Debug, PartialEq)]
+#[derive(Clone, EnumString, Display, Debug, PartialEq)]
 pub enum PortState {
     #[strum(serialize = "open")]
     Open,
@@ -138,7 +146,7 @@ pub enum PortState {
     CloseFiltered,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ServiceInfo {
     pub name: String,
     pub confidence_level: u8,
@@ -174,7 +182,7 @@ impl ServiceInfo {
     }
 }
 
-#[derive(EnumString, Display, Debug, PartialEq)]
+#[derive(Clone, EnumString, Display, Debug, PartialEq)]
 pub enum ServiceMethod {
     #[strum(serialize = "table")]
     Table,

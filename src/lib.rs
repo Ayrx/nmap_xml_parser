@@ -21,12 +21,15 @@
 //!
 //!The API is __not stable__ and is subject to breaking changes until the
 //!crate reaches 1.0. Use with care.
+pub use crate::host::HostDetails;
+pub use crate::port::Port;
+
 use roxmltree::{Document, Node};
 
 pub mod host;
 pub mod port;
 
-use crate::host::Host;
+pub use crate::host::Host;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -43,7 +46,7 @@ impl From<&str> for Error {
 }
 
 ///Root structure of a Nmap scan result.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct NmapResults {
     ///List of hosts in the Nmap scan.
     pub hosts: Vec<Host>,
@@ -92,6 +95,25 @@ impl NmapResults {
             scan_start_time,
             scan_end_time,
         })
+    }
+}
+
+impl IntoIterator for NmapResults {
+    type Item = (HostDetails, Port);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut results: Vec<Self::Item> = Vec::new();
+
+        // map each host onto an iterator over (host, port) keeping the host
+        // part static, then flatten to make a single iterator
+
+        for host in &self.hosts {
+            for port in host.port_info.clone() {
+                results.push((host.host_details.clone(), port.clone()));
+            }
+        }
+        results.into_iter()
     }
 }
 
