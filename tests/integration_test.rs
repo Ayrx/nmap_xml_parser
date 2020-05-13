@@ -33,28 +33,28 @@ fn end_time() {
 #[test]
 fn host_start_time() {
     let host = NMAP.hosts.get(0).unwrap();
-    assert_eq!(host.scan_start_time, 1588318812);
+    assert_eq!(host.host_details.scan_start_time, 1588318812);
 }
 
 #[test]
 fn host_end_time() {
     let host = NMAP.hosts.get(0).unwrap();
-    assert_eq!(host.scan_end_time, 1588318814);
+    assert_eq!(host.host_details.scan_end_time, 1588318814);
 }
 
 #[test]
 fn host_ip_address() {
     let host = NMAP.hosts.get(0).unwrap();
     let ip: std::net::IpAddr = "45.33.32.156".parse().unwrap();
-    assert_eq!(host.ip_address, ip);
+    assert_eq!(host.host_details.ip_address, ip);
 }
 
 #[test]
 fn host_status() {
     let host = NMAP.hosts.get(0).unwrap();
-    assert_eq!(host.status.reason, "echo-reply");
-    assert_eq!(host.status.reason_ttl, 53);
-    assert_eq!(host.status.state, host::HostState::Up);
+    assert_eq!(host.host_details.status.reason, "echo-reply");
+    assert_eq!(host.host_details.status.reason_ttl, 53);
+    assert_eq!(host.host_details.status.state, host::HostState::Up);
 }
 
 #[test]
@@ -72,8 +72,8 @@ fn host_hostnames() {
         source: host::HostnameType::Dns,
     });
 
-    assert!(!host.host_names.is_empty());
-    assert!(vectors_eq(&host.host_names, &expected));
+    assert!(!host.host_details.host_names.is_empty());
+    assert!(vectors_eq(&host.host_details.host_names, &expected));
 }
 
 #[test]

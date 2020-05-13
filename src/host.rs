@@ -7,13 +7,19 @@ use strum_macros::{Display, EnumString};
 use crate::port::PortInfo;
 use crate::Error;
 
-pub struct Host {
+#[derive(Debug)]
+pub struct HostDetails {
     pub ip_address: IpAddr,
     pub status: HostStatus,
     pub host_names: Vec<Hostname>,
-    pub port_info: PortInfo,
     pub scan_start_time: i64,
     pub scan_end_time: i64,
+}
+
+#[derive(Debug)]
+pub struct Host {
+    pub host_details: HostDetails,
+    pub port_info: PortInfo,
 }
 
 impl Host {
@@ -56,12 +62,15 @@ impl Host {
             host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
         let port_info = port_info.ok_or_else(|| Error::from("expected `address` node for host"))?;
 
-        Ok(Host {
+        let host_details = HostDetails {
             scan_start_time,
             scan_end_time,
             ip_address,
             status,
             host_names,
+        };
+        Ok(Host {
+            host_details,
             port_info,
         })
     }
@@ -88,6 +97,7 @@ fn parse_hostnames_node(node: Node) -> Result<Vec<Hostname>, Error> {
     Ok(r)
 }
 
+#[derive(Debug)]
 pub struct HostStatus {
     pub state: HostState,
     pub reason: String,
