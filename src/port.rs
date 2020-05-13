@@ -34,13 +34,19 @@ pub struct Port {
 
 impl Port {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node.attribute("protocol").ok_or(Error::InvalidNmapOutput)?;
-        let protocol = PortProtocol::from_str(s).or(Err(Error::InvalidNmapOutput))?;
+        let s = node
+            .attribute("protocol")
+            .ok_or(Error::from("expected `protocol` attribute in `port` node"))?;
+        let protocol =
+            PortProtocol::from_str(s).or(Err(Error::from("failed to parse port protocol")))?;
 
         let port_number = node
             .attribute("portid")
-            .ok_or(Error::InvalidNmapOutput)
-            .and_then(|s| s.parse::<u16>().or(Err(Error::InvalidNmapOutput)))?;
+            .ok_or(Error::from("expected `portid` attribute in `port` node"))
+            .and_then(|s| {
+                s.parse::<u16>()
+                    .or(Err(Error::from("failed to parse port ID")))
+            })?;
 
         let mut status = None;
         let mut service_info = None;
@@ -53,8 +59,9 @@ impl Port {
             }
         }
 
-        let status = status.ok_or(Error::InvalidNmapOutput)?;
-        let service_info = service_info.ok_or(Error::InvalidNmapOutput)?;
+        let status = status.ok_or(Error::from("expected `state` attribute for port"))?;
+        let service_info =
+            service_info.ok_or(Error::from("expected `state` attribute for port"))?;
 
         Ok(Port {
             protocol,
@@ -86,18 +93,23 @@ pub struct PortStatus {
 
 impl PortStatus {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node.attribute("state").ok_or(Error::InvalidNmapOutput)?;
-        let state = PortState::from_str(s).or(Err(Error::InvalidNmapOutput))?;
+        let s = node
+            .attribute("state")
+            .ok_or(Error::from("expected `state` attribute for port"))?;
+        let state = PortState::from_str(s).or(Err(Error::from("failed to parse port state")))?;
 
         let reason = node
             .attribute("reason")
-            .ok_or(Error::InvalidNmapOutput)?
+            .ok_or(Error::from("expected `reason` attribute for port"))?
             .to_string();
 
         let reason_ttl = node
             .attribute("reason_ttl")
-            .ok_or(Error::InvalidNmapOutput)
-            .and_then(|s| s.parse::<u8>().or(Err(Error::InvalidNmapOutput)))?;
+            .ok_or(Error::from("expected `reason_ttl` attribute for port"))
+            .and_then(|s| {
+                s.parse::<u8>()
+                    .or(Err(Error::from("failed to parse port reason_ttl")))
+            })?;
 
         Ok(PortStatus {
             state,
@@ -134,16 +146,22 @@ impl ServiceInfo {
     fn parse(node: Node) -> Result<Self, Error> {
         let name = node
             .attribute("name")
-            .ok_or(Error::InvalidNmapOutput)?
+            .ok_or(Error::from("expected `name` attribute for service"))?
             .to_string();
 
         let confidence_level = node
             .attribute("conf")
-            .ok_or(Error::InvalidNmapOutput)
-            .and_then(|s| s.parse::<u8>().or(Err(Error::InvalidNmapOutput)))?;
+            .ok_or(Error::from("expected `conf` attribute for service"))
+            .and_then(|s| {
+                s.parse::<u8>()
+                    .or(Err(Error::from("failed to parse port reason_ttl")))
+            })?;
 
-        let s = node.attribute("method").ok_or(Error::InvalidNmapOutput)?;
-        let method = ServiceMethod::from_str(s).or(Err(Error::InvalidNmapOutput))?;
+        let s = node
+            .attribute("method")
+            .ok_or(Error::from("expected `method` attribute for service"))?;
+        let method =
+            ServiceMethod::from_str(s).or(Err(Error::from("failed to parse service method")))?;
 
         Ok(ServiceInfo {
             name,
