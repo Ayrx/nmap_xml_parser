@@ -20,18 +20,18 @@ impl Host {
     pub(crate) fn parse(node: Node) -> Result<Self, Error> {
         let scan_start_time = node
             .attribute("starttime")
-            .ok_or(Error::from("expected `starttime` attribute in `host` node"))
+            .ok_or_else(|| Error::from("expected `starttime` attribute in `host` node"))
             .and_then(|s| {
                 s.parse::<i64>()
-                    .or(Err(Error::from("failed to parse host start time")))
+                    .or_else(|_| Err(Error::from("failed to parse host start time")))
             })?;
 
         let scan_end_time = node
             .attribute("endtime")
-            .ok_or(Error::from("expected `endtime` attribute in `host` node"))
+            .ok_or_else(|| Error::from("expected `endtime` attribute in `host` node"))
             .and_then(|s| {
                 s.parse::<i64>()
-                    .or(Err(Error::from("failed to parse host end time")))
+                    .or_else(|_| Err(Error::from("failed to parse host end time")))
             })?;
 
         let mut ip_address = None;
@@ -49,10 +49,12 @@ impl Host {
             }
         }
 
-        let ip_address = ip_address.ok_or(Error::from("expected `address` node for host"))?;
-        let status = status.ok_or(Error::from("expected `status` node for host"))?;
-        let host_names = host_names.ok_or(Error::from("expected `address` node for host"))?;
-        let port_info = port_info.ok_or(Error::from("expected `address` node for host"))?;
+        let ip_address =
+            ip_address.ok_or_else(|| Error::from("expected `address` node for host"))?;
+        let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
+        let host_names =
+            host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
+        let port_info = port_info.ok_or_else(|| Error::from("expected `address` node for host"))?;
 
         Ok(Host {
             scan_start_time,
@@ -67,10 +69,10 @@ impl Host {
 
 fn parse_address_node(node: Node) -> Result<IpAddr, Error> {
     node.attribute("addr")
-        .ok_or(Error::from("expected `addr` attribute in `address` node"))
+        .ok_or_else(|| Error::from("expected `addr` attribute in `address` node"))
         .and_then(|s| {
             s.parse::<IpAddr>()
-                .or(Err(Error::from("failed to parse IP address")))
+                .or_else(|_| Err(Error::from("failed to parse IP address")))
         })
 }
 
@@ -94,26 +96,23 @@ pub struct HostStatus {
 
 impl HostStatus {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node.attribute("state").ok_or(Error::from(
-            "expected `state` attribute in `hoststatus` node",
-        ))?;
-        let state = HostState::from_str(s).or(Err(Error::from("failed to parse host state")))?;
+        let s = node
+            .attribute("state")
+            .ok_or_else(|| Error::from("expected `state` attribute in `hoststatus` node"))?;
+        let state =
+            HostState::from_str(s).or_else(|_| Err(Error::from("failed to parse host state")))?;
 
         let reason = node
             .attribute("reason")
-            .ok_or(Error::from(
-                "expected `reason` attribute in `hoststatus` node",
-            ))?
+            .ok_or_else(|| Error::from("expected `reason` attribute in `hoststatus` node"))?
             .to_string();
 
         let reason_ttl = node
             .attribute("reason_ttl")
-            .ok_or(Error::from(
-                "expected `reason_ttl` attribute in `hoststatus` node",
-            ))
+            .ok_or_else(|| Error::from("expected `reason_ttl` attribute in `hoststatus` node"))
             .and_then(|s| {
                 s.parse::<u8>()
-                    .or(Err(Error::from("failed to parse `reason_ttl`")))
+                    .or_else(|_| Err(Error::from("failed to parse `reason_ttl`")))
             })?;
 
         Ok(HostStatus {
@@ -154,15 +153,14 @@ impl Hostname {
     fn parse(node: Node) -> Result<Self, Error> {
         let name = node
             .attribute("name")
-            .ok_or(Error::from("expected `name` attribute in `hostname` node"))?
+            .ok_or_else(|| Error::from("expected `name` attribute in `hostname` node"))?
             .to_string();
 
         let s = node
             .attribute("type")
-            .ok_or(Error::from("expected `type` attribute in `hostname` node"))?;
-        let source = HostnameType::from_str(s).or(Err(Error::from(
-            "expected `source` attribute in `address` node",
-        )))?;
+            .ok_or_else(|| Error::from("expected `type` attribute in `hostname` node"))?;
+        let source = HostnameType::from_str(s)
+            .or_else(|_| Err(Error::from("expected `source` attribute in `address` node")))?;
 
         Ok(Hostname { name, source })
     }

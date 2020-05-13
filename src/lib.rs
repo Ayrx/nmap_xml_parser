@@ -22,7 +22,6 @@
 //!The API is __not stable__ and is subject to breaking changes until the
 //!crate reaches 1.0. Use with care.
 use roxmltree::{Document, Node};
-use strum;
 
 pub mod host;
 pub mod port;
@@ -65,10 +64,10 @@ impl NmapResults {
 
         let scan_start_time = root_element
             .attribute("start")
-            .ok_or(Error::from("expected start time attribute"))
+            .ok_or_else(|| Error::from("expected start time attribute"))
             .and_then(|s| {
                 s.parse::<i64>()
-                    .or(Err(Error::from("failed to parse start time")))
+                    .or_else(|_| Err(Error::from("failed to parse start time")))
             })?;
 
         let mut hosts: Vec<Host> = Vec::new();
@@ -85,7 +84,7 @@ impl NmapResults {
         }
 
         let scan_end_time =
-            scan_end_time.ok_or(Error::from("expected scan_end_time in runstats"))?;
+            scan_end_time.ok_or_else(|| Error::from("expected scan_end_time in runstats"))?;
 
         Ok(NmapResults {
             hosts,
@@ -100,10 +99,10 @@ fn parse_runstats(node: Node) -> Result<i64, Error> {
         if child.tag_name().name() == "finished" {
             let finished = child
                 .attribute("time")
-                .ok_or(Error::from("expected `time` `runstats`.`finished`"))
+                .ok_or_else(|| Error::from("expected `time` `runstats`.`finished`"))
                 .and_then(|s| {
                     s.parse::<i64>()
-                        .or(Err(Error::from("failed to parse end time")))
+                        .or_else(|_| Err(Error::from("failed to parse end time")))
                 })?;
             return Ok(finished);
         }

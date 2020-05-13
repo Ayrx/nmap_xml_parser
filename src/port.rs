@@ -14,6 +14,7 @@ impl PortInfo {
         let mut ports = Vec::new();
 
         for child in node.children() {
+            #[allow(clippy::single_match)]
             match child.tag_name().name() {
                 "port" => ports.push(Port::parse(child)?),
                 _ => {}
@@ -36,16 +37,16 @@ impl Port {
     fn parse(node: Node) -> Result<Self, Error> {
         let s = node
             .attribute("protocol")
-            .ok_or(Error::from("expected `protocol` attribute in `port` node"))?;
-        let protocol =
-            PortProtocol::from_str(s).or(Err(Error::from("failed to parse port protocol")))?;
+            .ok_or_else(|| Error::from("expected `protocol` attribute in `port` node"))?;
+        let protocol = PortProtocol::from_str(s)
+            .or_else(|_| Err(Error::from("failed to parse port protocol")))?;
 
         let port_number = node
             .attribute("portid")
-            .ok_or(Error::from("expected `portid` attribute in `port` node"))
+            .ok_or_else(|| Error::from("expected `portid` attribute in `port` node"))
             .and_then(|s| {
                 s.parse::<u16>()
-                    .or(Err(Error::from("failed to parse port ID")))
+                    .or_else(|_| Err(Error::from("failed to parse port ID")))
             })?;
 
         let mut status = None;
@@ -59,9 +60,9 @@ impl Port {
             }
         }
 
-        let status = status.ok_or(Error::from("expected `state` attribute for port"))?;
+        let status = status.ok_or_else(|| Error::from("expected `state` attribute for port"))?;
         let service_info =
-            service_info.ok_or(Error::from("expected `state` attribute for port"))?;
+            service_info.ok_or_else(|| Error::from("expected `state` attribute for port"))?;
 
         Ok(Port {
             protocol,
@@ -95,20 +96,21 @@ impl PortStatus {
     fn parse(node: Node) -> Result<Self, Error> {
         let s = node
             .attribute("state")
-            .ok_or(Error::from("expected `state` attribute for port"))?;
-        let state = PortState::from_str(s).or(Err(Error::from("failed to parse port state")))?;
+            .ok_or_else(|| Error::from("expected `state` attribute for port"))?;
+        let state =
+            PortState::from_str(s).or_else(|_| Err(Error::from("failed to parse port state")))?;
 
         let reason = node
             .attribute("reason")
-            .ok_or(Error::from("expected `reason` attribute for port"))?
+            .ok_or_else(|| Error::from("expected `reason` attribute for port"))?
             .to_string();
 
         let reason_ttl = node
             .attribute("reason_ttl")
-            .ok_or(Error::from("expected `reason_ttl` attribute for port"))
+            .ok_or_else(|| Error::from("expected `reason_ttl` attribute for port"))
             .and_then(|s| {
                 s.parse::<u8>()
-                    .or(Err(Error::from("failed to parse port reason_ttl")))
+                    .or_else(|_| Err(Error::from("failed to parse port reason_ttl")))
             })?;
 
         Ok(PortStatus {
@@ -146,22 +148,22 @@ impl ServiceInfo {
     fn parse(node: Node) -> Result<Self, Error> {
         let name = node
             .attribute("name")
-            .ok_or(Error::from("expected `name` attribute for service"))?
+            .ok_or_else(|| Error::from("expected `name` attribute for service"))?
             .to_string();
 
         let confidence_level = node
             .attribute("conf")
-            .ok_or(Error::from("expected `conf` attribute for service"))
+            .ok_or_else(|| Error::from("expected `conf` attribute for service"))
             .and_then(|s| {
                 s.parse::<u8>()
-                    .or(Err(Error::from("failed to parse port reason_ttl")))
+                    .or_else(|_| Err(Error::from("failed to parse port reason_ttl")))
             })?;
 
         let s = node
             .attribute("method")
-            .ok_or(Error::from("expected `method` attribute for service"))?;
-        let method =
-            ServiceMethod::from_str(s).or(Err(Error::from("failed to parse service method")))?;
+            .ok_or_else(|| Error::from("expected `method` attribute for service"))?;
+        let method = ServiceMethod::from_str(s)
+            .or_else(|_| Err(Error::from("failed to parse service method")))?;
 
         Ok(ServiceInfo {
             name,
