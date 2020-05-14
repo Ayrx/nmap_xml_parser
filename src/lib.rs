@@ -97,6 +97,11 @@ impl NmapResults {
             scan_end_time,
         })
     }
+
+    /// Returns an iterator over the hosts present in the Nmap Scan
+    pub fn hosts(&self) -> std::slice::Iter <Host>{
+        self.hosts.iter()
+    }
 }
 
 impl IntoIterator for NmapResults {
