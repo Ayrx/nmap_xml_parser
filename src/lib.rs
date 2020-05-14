@@ -23,6 +23,7 @@
 //!crate reaches 1.0. Use with care.
 pub use crate::host::HostDetails;
 pub use crate::port::Port;
+use std::sync::Arc;
 
 use roxmltree::{Document, Node};
 
@@ -99,7 +100,7 @@ impl NmapResults {
 }
 
 impl IntoIterator for NmapResults {
-    type Item = (HostDetails, Port);
+    type Item = (Arc<HostDetails>, Port);
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -109,7 +110,7 @@ impl IntoIterator for NmapResults {
         // part static, then flatten to make a single iterator
 
         for host in &self.hosts {
-            for port in host.port_info.clone() {
+            for port in host.port_info.iter() {
                 results.push((host.host_details.clone(), port.clone()));
             }
         }

@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use nmap_xml_parser::host::*;
 use nmap_xml_parser::port::*;
+use std::sync::Arc;
 
 use nmap_xml_parser::{HostDetails, NmapResults, Port};
 use std::fs;
@@ -26,35 +27,37 @@ fn iter() {
     use PortState::*;
     use ServiceMethod::*;
     let nmap = NMAP.clone();
-    let vector: Vec<(HostDetails, Port)> = nmap.into_iter().collect();
+    let vector: Vec<(Arc<HostDetails>, Port)> = nmap.into_iter().collect();
+
+    let host_details = Arc::new(HostDetails {
+        ip_address: "45.33.32.156".parse().unwrap(),
+        status: HostStatus {
+            state: Up,
+            reason: "echo-reply".to_string(),
+            reason_ttl: 53,
+        },
+        host_names: vec![
+            Hostname {
+                name: "scanme.nmap.org".to_string(),
+                source: User,
+            },
+            Hostname {
+                name: "scanme.nmap.org".to_string(),
+                source: Dns,
+            },
+        ],
+        scan_start_time: 1_588_318_812,
+        scan_end_time: 1_588_318_814,
+    });
 
     let correct = vec![
         (
-            HostDetails {
-                ip_address: "45.33.32.156".parse().unwrap(),
-                status: HostStatus {
-                    state: HostState::Up,
-                    reason: "echo-reply".to_string(),
-                    reason_ttl: 53,
-                },
-                host_names: vec![
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: User,
-                    },
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: HostnameType::Dns,
-                    },
-                ],
-                scan_start_time: 1588318812,
-                scan_end_time: 1588318814,
-            },
+            host_details.clone(),
             Port {
-                protocol: PortProtocol::Tcp,
+                protocol: Tcp,
                 port_number: 22,
                 status: PortStatus {
-                    state: PortState::Open,
+                    state: Open,
                     reason: "syn-ack".to_string(),
                     reason_ttl: 53,
                 },
@@ -66,28 +69,9 @@ fn iter() {
             },
         ),
         (
-            HostDetails {
-                ip_address: "45.33.32.156".parse().unwrap(),
-                status: HostStatus {
-                    state: Up,
-                    reason: "echo-reply".to_string(),
-                    reason_ttl: 53,
-                },
-                host_names: vec![
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: HostnameType::User,
-                    },
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: HostnameType::Dns,
-                    },
-                ],
-                scan_start_time: 1588318812,
-                scan_end_time: 1588318814,
-            },
+            host_details.clone(),
             Port {
-                protocol: PortProtocol::Tcp,
+                protocol: Tcp,
                 port_number: 80,
                 status: PortStatus {
                     state: Open,
@@ -102,26 +86,7 @@ fn iter() {
             },
         ),
         (
-            HostDetails {
-                ip_address: "45.33.32.156".parse().unwrap(),
-                status: HostStatus {
-                    state: Up,
-                    reason: "echo-reply".to_string(),
-                    reason_ttl: 53,
-                },
-                host_names: vec![
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: User,
-                    },
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: Dns,
-                    },
-                ],
-                scan_start_time: 1588318812,
-                scan_end_time: 1588318814,
-            },
+            host_details.clone(),
             Port {
                 protocol: Tcp,
                 port_number: 9929,
@@ -138,26 +103,7 @@ fn iter() {
             },
         ),
         (
-            HostDetails {
-                ip_address: "45.33.32.156".parse().unwrap(),
-                status: HostStatus {
-                    state: Up,
-                    reason: "echo-reply".to_string(),
-                    reason_ttl: 53,
-                },
-                host_names: vec![
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: User,
-                    },
-                    Hostname {
-                        name: "scanme.nmap.org".to_string(),
-                        source: Dns,
-                    },
-                ],
-                scan_start_time: 1588318812,
-                scan_end_time: 1588318814,
-            },
+            host_details,
             Port {
                 protocol: Tcp,
                 port_number: 31337,

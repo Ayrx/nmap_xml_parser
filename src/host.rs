@@ -1,11 +1,11 @@
 //!Host related structs and enums.
+use crate::port::PortInfo;
+use crate::Error;
 use roxmltree::Node;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::sync::Arc;
 use strum_macros::{Display, EnumString};
-
-use crate::port::PortInfo;
-use crate::Error;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct HostDetails {
@@ -18,8 +18,8 @@ pub struct HostDetails {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Host {
-    pub host_details: HostDetails,
-    pub port_info: PortInfo,
+    pub host_details: Arc<HostDetails>,
+    pub port_info: Arc<PortInfo>,
 }
 
 impl Host {
@@ -60,15 +60,16 @@ impl Host {
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
         let host_names =
             host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
-        let port_info = port_info.ok_or_else(|| Error::from("expected `address` node for host"))?;
+        let port_info =
+            Arc::new(port_info.ok_or_else(|| Error::from("expected `address` node for host"))?);
 
-        let host_details = HostDetails {
+        let host_details = Arc::new(HostDetails {
             scan_start_time,
             scan_end_time,
             ip_address,
             status,
             host_names,
-        };
+        });
         Ok(Host {
             host_details,
             port_info,

@@ -24,13 +24,9 @@ impl PortInfo {
 
         Ok(PortInfo { ports })
     }
-}
 
-impl IntoIterator for PortInfo {
-    type Item = Port;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.ports.into_iter()
+    pub fn iter(&self) -> std::slice::Iter<Port> {
+        self.ports.iter()
     }
 }
 
