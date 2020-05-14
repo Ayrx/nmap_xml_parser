@@ -22,7 +22,6 @@
 //!The API is __not stable__ and is subject to breaking changes until the
 //!crate reaches 1.0. Use with care.
 use roxmltree::{Document, Node};
-use strum;
 
 pub mod host;
 pub mod port;
@@ -33,8 +32,14 @@ use crate::host::Host;
 pub enum Error {
     #[error("error parsing file as XML document")]
     XmlError(#[from] roxmltree::Error),
-    #[error("file is not an Nmap XML output")]
-    InvalidNmapOutput,
+    #[error("error parsing Nmap XML output: {0}")]
+    InvalidNmapOutput(String),
+}
+
+impl From<&str> for Error {
+    fn from(s: &str) -> Self {
+        Self::InvalidNmapOutput(s.to_string())
+    }
 }
 
 ///Root structure of a Nmap scan result.
@@ -54,13 +59,16 @@ impl NmapResults {
         let doc = Document::parse(&xml)?;
         let root_element = doc.root_element();
         if root_element.tag_name().name() != "nmaprun" {
-            return Err(Error::InvalidNmapOutput);
+            return Err(Error::from("expected `nmaprun` root tag"));
         }
 
         let scan_start_time = root_element
             .attribute("start")
-            .ok_or(Error::InvalidNmapOutput)
-            .and_then(|s| s.parse::<i64>().or(Err(Error::InvalidNmapOutput)))?;
+            .ok_or_else(|| Error::from("expected start time attribute"))
+            .and_then(|s| {
+                s.parse::<i64>()
+                    .or_else(|_| Err(Error::from("failed to parse start time")))
+            })?;
 
         let mut hosts: Vec<Host> = Vec::new();
         let mut scan_end_time = None;
@@ -75,7 +83,8 @@ impl NmapResults {
             }
         }
 
-        let scan_end_time = scan_end_time.ok_or(Error::InvalidNmapOutput)?;
+        let scan_end_time =
+            scan_end_time.ok_or_else(|| Error::from("expected scan_end_time in runstats"))?;
 
         Ok(NmapResults {
             hosts,
@@ -90,11 +99,14 @@ fn parse_runstats(node: Node) -> Result<i64, Error> {
         if child.tag_name().name() == "finished" {
             let finished = child
                 .attribute("time")
-                .ok_or(Error::InvalidNmapOutput)
-                .and_then(|s| s.parse::<i64>().or(Err(Error::InvalidNmapOutput)))?;
+                .ok_or_else(|| Error::from("expected `time` `runstats`.`finished`"))
+                .and_then(|s| {
+                    s.parse::<i64>()
+                        .or_else(|_| Err(Error::from("failed to parse end time")))
+                })?;
             return Ok(finished);
         }
     }
 
-    Err(Error::InvalidNmapOutput)
+    Err(Error::from("expected `finished` tag in `runstats`"))
 }
