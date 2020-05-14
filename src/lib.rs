@@ -102,6 +102,12 @@ impl NmapResults {
     pub fn hosts(&self) -> std::slice::Iter <Host>{
         self.hosts.iter()
     }
+
+    /// Consumes self and returns an iterator over (Arc<HostDetails>, Port)
+    /// allowing iteration over the scanned ports.
+    pub fn iter(self) -> std::vec::IntoIter<(Arc<HostDetails>, Port)> {
+        self.into_iter()
+    }
 }
 
 impl IntoIterator for NmapResults {
