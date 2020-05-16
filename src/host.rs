@@ -7,8 +7,14 @@ use strum_macros::{Display, EnumString};
 use crate::port::PortInfo;
 use crate::Error;
 
+#[derive(Display, Debug, PartialEq)]
+pub enum Address {
+    IpAddr(IpAddr),
+    MacAddr(String),
+}
+
 pub struct Host {
-    pub ip_address: IpAddr,
+    pub addresses: Vec<Address>,
     pub status: HostStatus,
     pub host_names: Vec<Hostname>,
     pub port_info: PortInfo,
@@ -34,14 +40,15 @@ impl Host {
                     .or_else(|_| Err(Error::from("failed to parse host end time")))
             })?;
 
-        let mut ip_address = None;
         let mut status = None;
         let mut host_names = None;
         let mut port_info = None;
 
+        let mut addresses = Vec::new();
+
         for child in node.children() {
             match child.tag_name().name() {
-                "address" => ip_address = Some(parse_address_node(child)?),
+                "address" => addresses.push(parse_address_node(child)?),
                 "status" => status = Some(HostStatus::parse(child)?),
                 "hostnames" => host_names = Some(parse_hostnames_node(child)?),
                 "ports" => port_info = Some(PortInfo::parse(child)?),
@@ -49,8 +56,6 @@ impl Host {
             }
         }
 
-        let ip_address =
-            ip_address.ok_or_else(|| Error::from("expected `address` node for host"))?;
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
         let host_names =
             host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
@@ -59,7 +64,7 @@ impl Host {
         Ok(Host {
             scan_start_time,
             scan_end_time,
-            ip_address,
+            addresses,
             status,
             host_names,
             port_info,
@@ -67,13 +72,24 @@ impl Host {
     }
 }
 
-fn parse_address_node(node: Node) -> Result<IpAddr, Error> {
-    node.attribute("addr")
-        .ok_or_else(|| Error::from("expected `addr` attribute in `address` node"))
-        .and_then(|s| {
-            s.parse::<IpAddr>()
-                .or_else(|_| Err(Error::from("failed to parse IP address")))
-        })
+fn parse_address_node(node: Node) -> Result<Address, Error> {
+    let addrtype = node
+        .attribute("addrtype")
+        .ok_or_else(|| Error::from("expected `addrtype` attribute in `address` node"))?;
+
+    let addr = node
+        .attribute("addr")
+        .ok_or_else(|| Error::from("expected `addr` attribute in `address` node"))?;
+
+    match addrtype {
+        "mac" => Ok(Address::MacAddr(addr.to_string())),
+        _ => {
+            let a = addr
+                .parse::<IpAddr>()
+                .or_else(|_| Err(Error::from("failed to parse IP address")))?;
+            Ok(Address::IpAddr(a))
+        }
+    }
 }
 
 fn parse_hostnames_node(node: Node) -> Result<Vec<Hostname>, Error> {
