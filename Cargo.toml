@@ -3,7 +3,7 @@ name = "nmap_xml_parser"
 description = "Parse Nmap XML output into Rust"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Ayrx/nmap_xml_parser"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Terry Chia <terrycwk1994@gmail.com>"]
 edition = "2018"
 
