@@ -7,12 +7,13 @@ use strum_macros::{Display, EnumString};
 use crate::port::PortInfo;
 use crate::Error;
 
-#[derive(Display, Debug, PartialEq)]
+#[derive(Display, Clone, Debug, PartialEq)]
 pub enum Address {
     IpAddr(IpAddr),
     MacAddr(String),
 }
 
+#[derive(Clone, Debug)]
 pub struct Host {
     pub addresses: Vec<Address>,
     pub status: HostStatus,
@@ -104,6 +105,7 @@ fn parse_hostnames_node(node: Node) -> Result<Vec<Hostname>, Error> {
     Ok(r)
 }
 
+#[derive(Clone, Debug)]
 pub struct HostStatus {
     pub state: HostState,
     pub reason: String,
@@ -139,7 +141,7 @@ impl HostStatus {
     }
 }
 
-#[derive(EnumString, Display, Debug, PartialEq)]
+#[derive(EnumString, Display, Clone, Debug, PartialEq)]
 pub enum HostState {
     #[strum(serialize = "up")]
     Up,
@@ -151,7 +153,7 @@ pub enum HostState {
     Skipped,
 }
 
-#[derive(EnumString, Display, Debug, PartialEq)]
+#[derive(EnumString, Display, Clone, Debug, PartialEq)]
 pub enum HostnameType {
     #[strum(serialize = "user", to_string = "User")]
     User,
@@ -159,7 +161,7 @@ pub enum HostnameType {
     Dns,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Hostname {
     pub name: String,
     pub source: HostnameType,

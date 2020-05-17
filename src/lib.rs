@@ -44,6 +44,7 @@ impl From<&str> for Error {
 }
 
 ///Root structure of a Nmap scan result.
+#[derive(Clone, Debug)]
 pub struct NmapResults {
     ///List of hosts in the Nmap scan.
     pub hosts: Vec<Host>,
