@@ -27,6 +27,7 @@ pub mod host;
 pub mod port;
 
 use crate::host::Host;
+use crate::port::Port;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -91,6 +92,18 @@ impl NmapResults {
             scan_start_time,
             scan_end_time,
         })
+    }
+
+    ///Returns an iterator over the ports in the scan.
+    pub fn iter_ports(&self) -> std::vec::IntoIter<(&Host, &Port)> {
+        let mut results = Vec::new();
+        for host in &self.hosts {
+            for port in &host.port_info.ports {
+                results.push((host, port));
+            }
+        }
+
+        results.into_iter()
     }
 }
 

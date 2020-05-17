@@ -180,3 +180,15 @@ fn test_issue_one() {
         host::Address::MacAddr(s) => assert_eq!(s, &mac),
     }
 }
+
+#[test]
+fn test_iter_ports() {
+    let mut v = Vec::new();
+
+    for (_, port) in NMAP_TEST_XML.iter_ports() {
+        v.push(port.port_number);
+    }
+
+    let expected = vec![22, 80, 9929, 31337];
+    assert!(vectors_eq(&v, &expected));
+}
