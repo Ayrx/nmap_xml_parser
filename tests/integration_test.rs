@@ -39,13 +39,13 @@ fn end_time() {
 
 #[test]
 fn host_start_time() {
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
     assert_eq!(host.scan_start_time, 1588318812);
 }
 
 #[test]
 fn host_end_time() {
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
     assert_eq!(host.scan_end_time, 1588318814);
 }
 
@@ -53,7 +53,7 @@ fn host_end_time() {
 fn host_ip_address() {
     let ip: std::net::IpAddr = "45.33.32.156".parse().unwrap();
 
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
     assert!(host.addresses.len() == 1);
 
     let ip_addr = host.addresses.get(0).unwrap();
@@ -65,7 +65,7 @@ fn host_ip_address() {
 
 #[test]
 fn host_status() {
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
     assert_eq!(host.status.reason, "echo-reply");
     assert_eq!(host.status.reason_ttl, 53);
     assert_eq!(host.status.state, host::HostState::Up);
@@ -73,7 +73,7 @@ fn host_status() {
 
 #[test]
 fn host_hostnames() {
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
 
     let mut expected = Vec::new();
     expected.push(host::Hostname {
@@ -92,7 +92,7 @@ fn host_hostnames() {
 
 #[test]
 fn host_portinfo_ports() {
-    let host = NMAP_TEST_XML.hosts.get(0).unwrap();
+    let host = NMAP_TEST_XML.hosts().next().unwrap();
 
     let mut expected = Vec::new();
 
@@ -165,7 +165,7 @@ fn test_issue_one() {
     let ip: std::net::IpAddr = "192.168.59.138".parse().unwrap();
     let mac = "00:0C:29:71:23:2B".to_string();
 
-    let host = NMAP_ISSUE_ONE.hosts.get(0).unwrap();
+    let host = NMAP_ISSUE_ONE.hosts().next().unwrap();
     assert!(host.addresses.len() == 2);
 
     let ip_addr = host.addresses.get(0).unwrap();

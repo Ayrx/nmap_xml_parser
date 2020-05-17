@@ -47,7 +47,7 @@ impl From<&str> for Error {
 #[derive(Clone, Debug)]
 pub struct NmapResults {
     ///List of hosts in the Nmap scan.
-    pub hosts: Vec<Host>,
+    hosts: Vec<Host>,
 
     ///Start time of the Nmap scan as seconds since Unix epoch.
     pub scan_start_time: i64,
@@ -93,6 +93,11 @@ impl NmapResults {
             scan_start_time,
             scan_end_time,
         })
+    }
+
+    ///Returns an iterator over the hosts in the scan.
+    pub fn hosts(&self) -> std::slice::Iter<Host> {
+        self.hosts.iter()
     }
 
     ///Returns an iterator over the ports in the scan.
