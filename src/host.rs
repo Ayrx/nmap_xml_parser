@@ -15,9 +15,9 @@ pub enum Address {
 
 #[derive(Clone, Debug)]
 pub struct Host {
-    pub addresses: Vec<Address>,
+    pub(crate) addresses: Vec<Address>,
     pub status: HostStatus,
-    pub host_names: Vec<Hostname>,
+    pub(crate) host_names: Vec<Hostname>,
     pub port_info: PortInfo,
     pub scan_start_time: i64,
     pub scan_end_time: i64,
@@ -70,6 +70,16 @@ impl Host {
             host_names,
             port_info,
         })
+    }
+
+    ///Returns an iterator over the addresses associated with this host.
+    pub fn addresses(&self) -> std::slice::Iter<Address> {
+        self.addresses.iter()
+    }
+
+    ///Returns an iterator over the names associated with this host.
+    pub fn host_names(&self) -> std::slice::Iter<Hostname> {
+        self.host_names.iter()
     }
 }
 

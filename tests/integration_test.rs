@@ -54,9 +54,9 @@ fn host_ip_address() {
     let ip: std::net::IpAddr = "45.33.32.156".parse().unwrap();
 
     let host = NMAP_TEST_XML.hosts().next().unwrap();
-    assert!(host.addresses.len() == 1);
+    assert!(host.addresses().len() == 1);
 
-    let ip_addr = host.addresses.get(0).unwrap();
+    let ip_addr = host.addresses().next().unwrap();
     match ip_addr {
         host::Address::IpAddr(s) => assert_eq!(s, &ip),
         host::Address::MacAddr(_) => assert!(false),
@@ -76,88 +76,96 @@ fn host_hostnames() {
     let host = NMAP_TEST_XML.hosts().next().unwrap();
 
     let mut expected = Vec::new();
-    expected.push(host::Hostname {
+    let h1 = host::Hostname {
         name: "scanme.nmap.org".to_string(),
         source: host::HostnameType::User,
-    });
+    };
 
-    expected.push(host::Hostname {
+    let h2 = host::Hostname {
         name: "scanme.nmap.org".to_string(),
         source: host::HostnameType::Dns,
-    });
+    };
 
-    assert!(!host.host_names.is_empty());
-    assert!(vectors_eq(&host.host_names, &expected));
+    expected.push(&h1);
+    expected.push(&h2);
+
+    assert!(!(host.host_names().count() == 0));
+    assert!(vectors_eq(&host.host_names().collect(), &expected));
 }
 
-#[test]
-fn host_portinfo_ports() {
-    let host = NMAP_TEST_XML.hosts().next().unwrap();
+    #[test]
+    fn host_portinfo_ports() {
+        let host = NMAP_TEST_XML.hosts().next().unwrap();
 
-    let mut expected = Vec::new();
+        let mut expected = Vec::new();
 
-    expected.push(port::Port {
-        protocol: port::PortProtocol::Tcp,
-        port_number: 22,
-        status: port::PortStatus {
-            state: port::PortState::Open,
-            reason: "syn-ack".to_string(),
-            reason_ttl: 53,
-        },
-        service_info: port::ServiceInfo {
-            name: "ssh".to_string(),
-            method: port::ServiceMethod::Table,
-            confidence_level: 3,
-        },
-    });
+        let p1 = port::Port {
+            protocol: port::PortProtocol::Tcp,
+            port_number: 22,
+            status: port::PortStatus {
+                state: port::PortState::Open,
+                reason: "syn-ack".to_string(),
+                reason_ttl: 53,
+            },
+            service_info: port::ServiceInfo {
+                name: "ssh".to_string(),
+                method: port::ServiceMethod::Table,
+                confidence_level: 3,
+            },
+        };
 
-    expected.push(port::Port {
-        protocol: port::PortProtocol::Tcp,
-        port_number: 80,
-        status: port::PortStatus {
-            state: port::PortState::Open,
-            reason: "syn-ack".to_string(),
-            reason_ttl: 52,
-        },
-        service_info: port::ServiceInfo {
-            name: "http".to_string(),
-            method: port::ServiceMethod::Table,
-            confidence_level: 3,
-        },
-    });
+        let p2 = port::Port {
+            protocol: port::PortProtocol::Tcp,
+            port_number: 80,
+            status: port::PortStatus {
+                state: port::PortState::Open,
+                reason: "syn-ack".to_string(),
+                reason_ttl: 52,
+            },
+            service_info: port::ServiceInfo {
+                name: "http".to_string(),
+                method: port::ServiceMethod::Table,
+                confidence_level: 3,
+            },
+        };
 
-    expected.push(port::Port {
-        protocol: port::PortProtocol::Tcp,
-        port_number: 9929,
-        status: port::PortStatus {
-            state: port::PortState::Open,
-            reason: "syn-ack".to_string(),
-            reason_ttl: 53,
-        },
-        service_info: port::ServiceInfo {
-            name: "nping-echo".to_string(),
-            method: port::ServiceMethod::Table,
-            confidence_level: 3,
-        },
-    });
+        let p3 = port::Port {
+            protocol: port::PortProtocol::Tcp,
+            port_number: 9929,
+            status: port::PortStatus {
+                state: port::PortState::Open,
+                reason: "syn-ack".to_string(),
+                reason_ttl: 53,
+            },
+            service_info: port::ServiceInfo {
+                name: "nping-echo".to_string(),
+                method: port::ServiceMethod::Table,
+                confidence_level: 3,
+            },
+        };
 
-    expected.push(port::Port {
-        protocol: port::PortProtocol::Tcp,
-        port_number: 31337,
-        status: port::PortStatus {
-            state: port::PortState::Open,
-            reason: "syn-ack".to_string(),
-            reason_ttl: 52,
-        },
-        service_info: port::ServiceInfo {
-            name: "Elite".to_string(),
-            method: port::ServiceMethod::Table,
-            confidence_level: 3,
-        },
-    });
+        let p4 = port::Port {
+            protocol: port::PortProtocol::Tcp,
+            port_number: 31337,
+            status: port::PortStatus {
+                state: port::PortState::Open,
+                reason: "syn-ack".to_string(),
+                reason_ttl: 52,
+            },
+            service_info: port::ServiceInfo {
+                name: "Elite".to_string(),
+                method: port::ServiceMethod::Table,
+                confidence_level: 3,
+            },
+        };
 
-    assert!(!host.port_info.ports.is_empty());
-    assert!(vectors_eq(&host.port_info.ports, &expected));
+        expected.push(&p1);
+        expected.push(&p2);
+        expected.push(&p3);
+        expected.push(&p4);
+
+    assert!(!(host.port_info.ports().count() == 0));
+    assert!(vectors_eq(&host.port_info.ports().collect(), &expected));
 }
 
 #[test]
@@ -166,15 +174,19 @@ fn test_issue_one() {
     let mac = "00:0C:29:71:23:2B".to_string();
 
     let host = NMAP_ISSUE_ONE.hosts().next().unwrap();
-    assert!(host.addresses.len() == 2);
+    assert!(host.addresses().count() == 2);
 
-    let ip_addr = host.addresses.get(0).unwrap();
+    let mut addresses = host.addresses();
+
+    let ip_addr = addresses.next().unwrap();
+    println!("{:?}", ip_addr);
     match ip_addr {
         host::Address::IpAddr(s) => assert_eq!(s, &ip),
         host::Address::MacAddr(_) => assert!(false),
     }
 
-    let mac_addr = host.addresses.get(1).unwrap();
+    let mac_addr = addresses.next().unwrap();
+    println!("{:?}", mac_addr);
     match mac_addr {
         host::Address::IpAddr(_) => assert!(false),
         host::Address::MacAddr(s) => assert_eq!(s, &mac),

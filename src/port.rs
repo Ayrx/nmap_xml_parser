@@ -7,7 +7,7 @@ use crate::Error;
 
 #[derive(Clone, Debug)]
 pub struct PortInfo {
-    pub ports: Vec<Port>,
+    pub(crate) ports: Vec<Port>,
 }
 
 impl PortInfo {
@@ -23,6 +23,11 @@ impl PortInfo {
         }
 
         Ok(PortInfo { ports })
+    }
+
+    ///Returns an iterator over the ports associated with this host.
+    pub fn ports(&self) -> std::slice::Iter<Port> {
+        self.ports.iter()
     }
 }
 
