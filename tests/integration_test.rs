@@ -20,6 +20,13 @@ lazy_static! {
         let content = fs::read_to_string(path).unwrap();
         NmapResults::parse(&content).unwrap()
     };
+    static ref NMAP_HOST_DOWN: NmapResults = {
+        let mut path = PathBuf::new();
+        path.push(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        path.push("tests/host-down.xml");
+        let content = fs::read_to_string(path).unwrap();
+        NmapResults::parse(&content).unwrap()
+    };
 }
 
 fn vectors_eq<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
@@ -203,4 +210,14 @@ fn test_iter_ports() {
 
     let expected = vec![22, 80, 9929, 31337];
     assert!(vectors_eq(&v, &expected));
+}
+
+#[test]
+fn test_host_down() {
+    use host::HostState;
+    eprintln!("{:?}", *NMAP_HOST_DOWN);
+
+    for host in NMAP_HOST_DOWN.hosts() {
+        assert_eq!(host.status.state, HostState::Down);
+    }
 }
