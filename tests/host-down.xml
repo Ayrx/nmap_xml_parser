@@ -9,16 +9,16 @@
 <taskbegin task="ARP Ping Scan" time="1592485655"/>
 <taskend task="ARP Ping Scan" time="1592485655" extrainfo="4 total hosts"/>
 <host><status state="down" reason="no-response" reason_ttl="0"/>
-<address addr="192.168.59.232" addrtype="ipv4"/><hostnames/>
+<address addr="192.168.59.232" addrtype="ipv4"/>
 </host>
 <host><status state="down" reason="no-response" reason_ttl="0"/>
-<address addr="192.168.59.233" addrtype="ipv4"/><hostnames/>
+<address addr="192.168.59.233" addrtype="ipv4"/>
 </host>
 <host><status state="down" reason="no-response" reason_ttl="0"/>
-<address addr="192.168.59.234" addrtype="ipv4"/><hostnames/>
+<address addr="192.168.59.234" addrtype="ipv4"/>
 </host>
 <host><status state="down" reason="no-response" reason_ttl="0"/>
-<address addr="192.168.59.235" addrtype="ipv4"/><hostnames/>
+<address addr="192.168.59.235" addrtype="ipv4"/>
 </host>
 <runstats><finished time="1592485655" timestr="Thu Jun 18 14:07:35 2020" elapsed="0.58" summary="Nmap done at Thu Jun 18 14:07:35 2020; 4 IP addresses (0 hosts up) scanned in 0.58 seconds" exit="success"/><hosts up="0" down="4" total="4"/>
 </runstats>

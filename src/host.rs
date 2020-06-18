@@ -40,7 +40,7 @@ impl Host {
         };
 
         let mut status = None;
-        let mut host_names = None;
+        let mut host_names = Vec::new();
         let mut port_info = Default::default();
 
         let mut addresses = Vec::new();
@@ -49,15 +49,13 @@ impl Host {
             match child.tag_name().name() {
                 "address" => addresses.push(parse_address_node(child)?),
                 "status" => status = Some(HostStatus::parse(child)?),
-                "hostnames" => host_names = Some(parse_hostnames_node(child)?),
+                "hostnames" => host_names = parse_hostnames_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
                 _ => {}
             }
         }
 
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
-        let host_names =
-            host_names.ok_or_else(|| Error::from("expected `hostnames` node for host"))?;
 
         Ok(Host {
             scan_start_time,
