@@ -25,21 +25,19 @@ pub struct Host {
 
 impl Host {
     pub(crate) fn parse(node: Node) -> Result<Self, Error> {
-        let scan_start_time = node
-            .attribute("starttime")
-            .ok_or_else(|| Error::from("expected `starttime` attribute in `host` node"))
-            .and_then(|s| {
-                s.parse::<i64>()
-                    .or_else(|_| Err(Error::from("failed to parse host start time")))
-            })?;
+        let scan_start_time = if let Some(s) = node.attribute("starttime") {
+            s.parse::<i64>()
+                .or_else(|_| Err(Error::from("failed to parse host start time")))?
+        } else {
+            0
+        };
 
-        let scan_end_time = node
-            .attribute("endtime")
-            .ok_or_else(|| Error::from("expected `endtime` attribute in `host` node"))
-            .and_then(|s| {
-                s.parse::<i64>()
-                    .or_else(|_| Err(Error::from("failed to parse host end time")))
-            })?;
+        let scan_end_time = if let Some(s) = node.attribute("endtime") {
+            s.parse::<i64>()
+                .or_else(|_| Err(Error::from("failed to parse host end time")))?
+        } else {
+            0
+        };
 
         let mut status = None;
         let mut host_names = None;
