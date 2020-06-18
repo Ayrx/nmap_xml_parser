@@ -59,8 +59,8 @@ impl Host {
 
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
         let host_names =
-            host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
-        let port_info = port_info.ok_or_else(|| Error::from("expected `address` node for host"))?;
+            host_names.ok_or_else(|| Error::from("expected `hostnames` node for host"))?;
+        let port_info = port_info.ok_or_else(|| Error::from("expected `ports` node for host"))?;
 
         Ok(Host {
             scan_start_time,
