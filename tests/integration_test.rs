@@ -47,13 +47,13 @@ fn end_time() {
 #[test]
 fn host_start_time() {
     let host = NMAP_TEST_XML.hosts().next().unwrap();
-    assert_eq!(host.scan_start_time, 1588318812);
+    assert_eq!(host.scan_start_time, Some(1588318812));
 }
 
 #[test]
 fn host_end_time() {
     let host = NMAP_TEST_XML.hosts().next().unwrap();
-    assert_eq!(host.scan_end_time, 1588318814);
+    assert_eq!(host.scan_end_time, Some(1588318814));
 }
 
 #[test]
