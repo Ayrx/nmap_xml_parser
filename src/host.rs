@@ -19,31 +19,31 @@ pub struct Host {
     pub status: HostStatus,
     pub(crate) host_names: Vec<Hostname>,
     pub port_info: PortInfo,
-    pub scan_start_time: i64,
-    pub scan_end_time: i64,
+    pub scan_start_time: Option<i64>,
+    pub scan_end_time: Option<i64>,
 }
 
 impl Host {
     pub(crate) fn parse(node: Node) -> Result<Self, Error> {
         let scan_start_time = node
             .attribute("starttime")
-            .ok_or_else(|| Error::from("expected `starttime` attribute in `host` node"))
-            .and_then(|s| {
+            .map(|s| {
                 s.parse::<i64>()
                     .or_else(|_| Err(Error::from("failed to parse host start time")))
-            })?;
+            })
+            .transpose()?;
 
         let scan_end_time = node
             .attribute("endtime")
-            .ok_or_else(|| Error::from("expected `endtime` attribute in `host` node"))
-            .and_then(|s| {
+            .map(|s| {
                 s.parse::<i64>()
                     .or_else(|_| Err(Error::from("failed to parse host end time")))
-            })?;
+            })
+            .transpose()?;
 
         let mut status = None;
-        let mut host_names = None;
-        let mut port_info = None;
+        let mut host_names = Vec::new();
+        let mut port_info = Default::default();
 
         let mut addresses = Vec::new();
 
@@ -51,16 +51,13 @@ impl Host {
             match child.tag_name().name() {
                 "address" => addresses.push(parse_address_node(child)?),
                 "status" => status = Some(HostStatus::parse(child)?),
-                "hostnames" => host_names = Some(parse_hostnames_node(child)?),
-                "ports" => port_info = Some(PortInfo::parse(child)?),
+                "hostnames" => host_names = parse_hostnames_node(child)?,
+                "ports" => port_info = PortInfo::parse(child)?,
                 _ => {}
             }
         }
 
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
-        let host_names =
-            host_names.ok_or_else(|| Error::from("expected `address` node for host"))?;
-        let port_info = port_info.ok_or_else(|| Error::from("expected `address` node for host"))?;
 
         Ok(Host {
             scan_start_time,
@@ -191,5 +188,79 @@ impl Hostname {
             .or_else(|_| Err(Error::from("expected `source` attribute in `address` node")))?;
 
         Ok(Hostname { name, source })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use roxmltree::Document;
+
+    #[test]
+    fn host_with_start_end_time() {
+        let xml = r#"
+<host starttime="1589292535" endtime="1589292535">
+    <status state="down" reason="no-response" reason_ttl="0"/>
+    <address addr="192.168.59.234" addrtype="ipv4"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let host = Host::parse(ele).unwrap();
+
+        assert_eq!(host.scan_start_time, Some(1589292535));
+        assert_eq!(host.scan_end_time, Some(1589292535));
+    }
+
+    #[test]
+    fn host_without_start_end_time() {
+        let xml = r#"
+<host>
+    <status state="down" reason="no-response" reason_ttl="0"/>
+    <address addr="192.168.59.234" addrtype="ipv4"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let host = Host::parse(ele).unwrap();
+
+        assert!(host.scan_start_time.is_none());
+        assert!(host.scan_end_time.is_none());
+    }
+
+    #[test]
+    fn host_with_invalid_start_time() {
+        let xml = r#"
+<host starttime="NOT A NUMBER" endtime="1589292535">
+    <status state="down" reason="no-response" reason_ttl="0"/>
+    <address addr="192.168.59.234" addrtype="ipv4"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let host_err = Host::parse(ele).unwrap_err();
+
+        assert_eq!(
+            host_err.to_string(),
+            "error parsing Nmap XML output: failed to parse host start time"
+        );
+    }
+
+    #[test]
+    fn host_with_invalid_end_time() {
+        let xml = r#"
+<host starttime="1589292535" endtime="NOT A NUMBER">
+    <status state="down" reason="no-response" reason_ttl="0"/>
+    <address addr="192.168.59.234" addrtype="ipv4"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let host_err = Host::parse(ele).unwrap_err();
+
+        assert_eq!(
+            host_err.to_string(),
+            "error parsing Nmap XML output: failed to parse host end time"
+        );
     }
 }

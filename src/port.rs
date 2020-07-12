@@ -5,7 +5,7 @@ use strum_macros::{Display, EnumString};
 
 use crate::Error;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct PortInfo {
     pub(crate) ports: Vec<Port>,
 }
