@@ -36,7 +36,7 @@ pub struct Port {
     pub protocol: PortProtocol,
     pub port_number: u16,
     pub status: PortStatus,
-    pub service_info: ServiceInfo,
+    pub service_info: Option<ServiceInfo>,
 }
 
 impl Port {
@@ -67,8 +67,6 @@ impl Port {
         }
 
         let status = status.ok_or_else(|| Error::from("expected `state` attribute for port"))?;
-        let service_info =
-            service_info.ok_or_else(|| Error::from("expected `state` attribute for port"))?;
 
         Ok(Port {
             protocol,
