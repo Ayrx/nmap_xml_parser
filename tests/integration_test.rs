@@ -114,11 +114,11 @@ fn host_portinfo_ports() {
             reason: "syn-ack".to_string(),
             reason_ttl: 53,
         },
-        service_info: port::ServiceInfo {
+        service_info: Some(port::ServiceInfo {
             name: "ssh".to_string(),
             method: port::ServiceMethod::Table,
             confidence_level: 3,
-        },
+        }),
     };
 
     let p2 = port::Port {
@@ -129,11 +129,11 @@ fn host_portinfo_ports() {
             reason: "syn-ack".to_string(),
             reason_ttl: 52,
         },
-        service_info: port::ServiceInfo {
+        service_info: Some(port::ServiceInfo {
             name: "http".to_string(),
             method: port::ServiceMethod::Table,
             confidence_level: 3,
-        },
+        }),
     };
 
     let p3 = port::Port {
@@ -144,11 +144,11 @@ fn host_portinfo_ports() {
             reason: "syn-ack".to_string(),
             reason_ttl: 53,
         },
-        service_info: port::ServiceInfo {
+        service_info: Some(port::ServiceInfo {
             name: "nping-echo".to_string(),
             method: port::ServiceMethod::Table,
             confidence_level: 3,
-        },
+        }),
     };
 
     let p4 = port::Port {
@@ -159,11 +159,11 @@ fn host_portinfo_ports() {
             reason: "syn-ack".to_string(),
             reason_ttl: 52,
         },
-        service_info: port::ServiceInfo {
+        service_info: Some(port::ServiceInfo {
             name: "Elite".to_string(),
             method: port::ServiceMethod::Table,
             confidence_level: 3,
-        },
+        }),
     };
 
     expected.push(&p1);
