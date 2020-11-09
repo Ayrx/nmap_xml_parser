@@ -27,6 +27,13 @@ lazy_static! {
         let content = fs::read_to_string(path).unwrap();
         NmapResults::parse(&content).unwrap()
     };
+    static ref NMAP_INCOMPLETE_SCAN: NmapResults = {
+        let mut path = PathBuf::new();
+        path.push(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        path.push("tests/incomplete_scan.xml");
+        let content = fs::read_to_string(path).unwrap();
+        NmapResults::parse(&content).unwrap()
+    };
 }
 
 fn vectors_eq<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
@@ -41,7 +48,12 @@ fn start_time() {
 
 #[test]
 fn end_time() {
-    assert_eq!(NMAP_TEST_XML.scan_end_time, 1588318814);
+    assert_eq!(NMAP_TEST_XML.scan_end_time, Some(1588318814));
+}
+
+#[test]
+fn no_end_time() {
+    assert_eq!(NMAP_INCOMPLETE_SCAN.scan_end_time, None);
 }
 
 #[test]

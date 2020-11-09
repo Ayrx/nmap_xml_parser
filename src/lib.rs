@@ -53,7 +53,7 @@ pub struct NmapResults {
     pub scan_start_time: i64,
 
     ///End time of the Nmap scan as seconds since Unix epoch.
-    pub scan_end_time: i64,
+    pub scan_end_time: Option<i64>,
 }
 
 impl NmapResults {
@@ -84,9 +84,6 @@ impl NmapResults {
                 _ => {}
             }
         }
-
-        let scan_end_time =
-            scan_end_time.ok_or_else(|| Error::from("expected scan_end_time in runstats"))?;
 
         Ok(NmapResults {
             hosts,
