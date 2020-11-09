@@ -29,7 +29,7 @@ impl Host {
             .attribute("starttime")
             .map(|s| {
                 s.parse::<i64>()
-                    .or_else(|_| Err(Error::from("failed to parse host start time")))
+                    .map_err(|_| Error::from("failed to parse host start time"))
             })
             .transpose()?;
 
@@ -37,7 +37,7 @@ impl Host {
             .attribute("endtime")
             .map(|s| {
                 s.parse::<i64>()
-                    .or_else(|_| Err(Error::from("failed to parse host end time")))
+                    .map_err(|_| Error::from("failed to parse host end time"))
             })
             .transpose()?;
 
@@ -94,7 +94,7 @@ fn parse_address_node(node: Node) -> Result<Address, Error> {
         _ => {
             let a = addr
                 .parse::<IpAddr>()
-                .or_else(|_| Err(Error::from("failed to parse IP address")))?;
+                .map_err(|_| Error::from("failed to parse IP address"))?;
             Ok(Address::IpAddr(a))
         }
     }
@@ -125,7 +125,7 @@ impl HostStatus {
             .attribute("state")
             .ok_or_else(|| Error::from("expected `state` attribute in `hoststatus` node"))?;
         let state =
-            HostState::from_str(s).or_else(|_| Err(Error::from("failed to parse host state")))?;
+            HostState::from_str(s).map_err(|_| Error::from("failed to parse host state"))?;
 
         let reason = node
             .attribute("reason")
@@ -137,7 +137,7 @@ impl HostStatus {
             .ok_or_else(|| Error::from("expected `reason_ttl` attribute in `hoststatus` node"))
             .and_then(|s| {
                 s.parse::<u8>()
-                    .or_else(|_| Err(Error::from("failed to parse `reason_ttl`")))
+                    .map_err(|_| Error::from("failed to parse `reason_ttl`"))
             })?;
 
         Ok(HostStatus {
@@ -185,7 +185,7 @@ impl Hostname {
             .attribute("type")
             .ok_or_else(|| Error::from("expected `type` attribute in `hostname` node"))?;
         let source = HostnameType::from_str(s)
-            .or_else(|_| Err(Error::from("expected `source` attribute in `address` node")))?;
+            .map_err(|_| Error::from("expected `source` attribute in `address` node"))?;
 
         Ok(Hostname { name, source })
     }

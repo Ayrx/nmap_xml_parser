@@ -69,7 +69,7 @@ impl NmapResults {
             .ok_or_else(|| Error::from("expected start time attribute"))
             .and_then(|s| {
                 s.parse::<i64>()
-                    .or_else(|_| Err(Error::from("failed to parse start time")))
+                    .map_err(|_| Error::from("failed to parse start time"))
             })?;
 
         let mut hosts: Vec<Host> = Vec::new();
@@ -118,7 +118,7 @@ fn parse_runstats(node: Node) -> Result<i64, Error> {
                 .ok_or_else(|| Error::from("expected `time` `runstats`.`finished`"))
                 .and_then(|s| {
                     s.parse::<i64>()
-                        .or_else(|_| Err(Error::from("failed to parse end time")))
+                        .map_err(|_| Error::from("failed to parse end time"))
                 })?;
             return Ok(finished);
         }
