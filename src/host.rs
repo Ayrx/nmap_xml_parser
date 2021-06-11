@@ -77,6 +77,11 @@ impl Host {
         self.addresses.iter()
     }
 
+    ///Returns an iterator over the scripts associated with this host.
+    pub fn scripts(&self) -> std::slice::Iter<Script> {
+        self.scripts.iter()
+    }
+
     ///Returns an iterator over the names associated with this host.
     pub fn host_names(&self) -> std::slice::Iter<Hostname> {
         self.host_names.iter()
