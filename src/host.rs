@@ -16,6 +16,7 @@ pub enum Address {
 #[derive(Clone, Debug)]
 pub struct Host {
     pub(crate) addresses: Vec<Address>,
+    pub(crate) scripts: Vec<Script>,
     pub status: HostStatus,
     pub(crate) host_names: Vec<Hostname>,
     pub port_info: PortInfo,
@@ -44,7 +45,7 @@ impl Host {
         let mut status = None;
         let mut host_names = Vec::new();
         let mut port_info = Default::default();
-
+        let mut scripts = Vec::new();
         let mut addresses = Vec::new();
 
         for child in node.children() {
@@ -52,6 +53,7 @@ impl Host {
                 "address" => addresses.push(parse_address_node(child)?),
                 "status" => status = Some(HostStatus::parse(child)?),
                 "hostnames" => host_names = parse_hostnames_node(child)?,
+                "hostscript" => scripts = parse_hostscript_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
                 _ => {}
             }
@@ -66,6 +68,7 @@ impl Host {
             status,
             host_names,
             port_info,
+            scripts,
         })
     }
 
@@ -98,6 +101,18 @@ fn parse_address_node(node: Node) -> Result<Address, Error> {
             Ok(Address::IpAddr(a))
         }
     }
+}
+
+fn parse_hostscript_node(node: Node) -> Result<Vec<Script>, Error> {
+    let mut r = Vec::new();
+
+    for child in node.children() {
+        if child.tag_name().name() == "script" {
+            r.push(Script::parse(child)?);
+        }
+    }
+
+    Ok(r)
 }
 
 fn parse_hostnames_node(node: Node) -> Result<Vec<Hostname>, Error> {
@@ -190,6 +205,32 @@ impl Hostname {
         Ok(Hostname { name, source })
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Script {
+    pub id: String,
+    pub output: String,
+}
+
+impl Script {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let id = node
+            .attribute("id")
+            .ok_or_else(|| Error::from("expected `id` attribute in `script` node"))?
+            .to_string();
+
+        let output = node
+            .attribute("output")
+            .ok_or_else(|| Error::from("expected `output` attribute in `script` node"))?
+            .to_string();
+
+        Ok( Script { id, output} )
+    }
+}
+
+
+
+
 
 #[cfg(test)]
 mod test {
