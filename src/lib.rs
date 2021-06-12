@@ -58,7 +58,7 @@ pub struct NmapResults {
 
 impl NmapResults {
     pub fn parse(xml: &str) -> Result<Self, Error> {
-        let doc = Document::parse(&xml)?;
+        let doc = Document::parse(xml)?;
         let root_element = doc.root_element();
         if root_element.tag_name().name() != "nmaprun" {
             return Err(Error::from("expected `nmaprun` root tag"));

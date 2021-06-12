@@ -229,13 +229,9 @@ impl Script {
             .ok_or_else(|| Error::from("expected `output` attribute in `script` node"))?
             .to_string();
 
-        Ok( Script { id, output} )
+        Ok(Script { id, output })
     }
 }
-
-
-
-
 
 #[cfg(test)]
 mod test {
@@ -290,6 +286,25 @@ mod test {
             host_err.to_string(),
             "error parsing Nmap XML output: failed to parse host start time"
         );
+    }
+
+    #[test]
+    fn host_with_multiple_script_output() {
+        let xml = r#"
+<host starttime="1623467939" endtime="1623467939"><status state="up" reason="conn-refused" reason_ttl="0"/>
+<address addr="192.168.1.70" addrtype="ipv4"/>
+<hostscript><script id="smb-print-text" output="false">false</script><script id="smb2-time" output="&#xa;  date: 2021-06-12T03:17:58&#xa;  start_date: N/A"><elem key="date">2021-06-12T03:17:58</elem>
+<elem key="start_date">N/A</elem>
+</script></hostscript><times srtt="5263" rttvar="4662" to="100000"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let script_host = Host::parse(ele).unwrap();
+        let script_output = script_host.scripts().collect::<Vec<_>>()[0];
+
+        assert_eq!(script_output.id, "smb-print-text");
+        assert_eq!(script_output.output, "false");
     }
 
     #[test]
