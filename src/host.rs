@@ -62,13 +62,13 @@ impl Host {
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
 
         Ok(Host {
-            scan_start_time,
-            scan_end_time,
             addresses,
+            scripts,
             status,
             host_names,
             port_info,
-            scripts,
+            scan_start_time,
+            scan_end_time,
         })
     }
 
