@@ -16,6 +16,7 @@ pub enum Address {
 #[derive(Clone, Debug)]
 pub struct Host {
     pub(crate) addresses: Vec<Address>,
+    pub(crate) scripts: Vec<Script>,
     pub status: HostStatus,
     pub(crate) host_names: Vec<Hostname>,
     pub port_info: PortInfo,
@@ -44,7 +45,7 @@ impl Host {
         let mut status = None;
         let mut host_names = Vec::new();
         let mut port_info = Default::default();
-
+        let mut scripts = Vec::new();
         let mut addresses = Vec::new();
 
         for child in node.children() {
@@ -52,6 +53,7 @@ impl Host {
                 "address" => addresses.push(parse_address_node(child)?),
                 "status" => status = Some(HostStatus::parse(child)?),
                 "hostnames" => host_names = parse_hostnames_node(child)?,
+                "hostscript" => scripts = parse_hostscript_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
                 _ => {}
             }
@@ -60,18 +62,24 @@ impl Host {
         let status = status.ok_or_else(|| Error::from("expected `status` node for host"))?;
 
         Ok(Host {
-            scan_start_time,
-            scan_end_time,
             addresses,
+            scripts,
             status,
             host_names,
             port_info,
+            scan_start_time,
+            scan_end_time,
         })
     }
 
     ///Returns an iterator over the addresses associated with this host.
     pub fn addresses(&self) -> std::slice::Iter<Address> {
         self.addresses.iter()
+    }
+
+    ///Returns an iterator over the scripts associated with this host.
+    pub fn scripts(&self) -> std::slice::Iter<Script> {
+        self.scripts.iter()
     }
 
     ///Returns an iterator over the names associated with this host.
@@ -98,6 +106,18 @@ fn parse_address_node(node: Node) -> Result<Address, Error> {
             Ok(Address::IpAddr(a))
         }
     }
+}
+
+fn parse_hostscript_node(node: Node) -> Result<Vec<Script>, Error> {
+    let mut r = Vec::new();
+
+    for child in node.children() {
+        if child.tag_name().name() == "script" {
+            r.push(Script::parse(child)?);
+        }
+    }
+
+    Ok(r)
 }
 
 fn parse_hostnames_node(node: Node) -> Result<Vec<Hostname>, Error> {
@@ -191,6 +211,28 @@ impl Hostname {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Script {
+    pub id: String,
+    pub output: String,
+}
+
+impl Script {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let id = node
+            .attribute("id")
+            .ok_or_else(|| Error::from("expected `id` attribute in `script` node"))?
+            .to_string();
+
+        let output = node
+            .attribute("output")
+            .ok_or_else(|| Error::from("expected `output` attribute in `script` node"))?
+            .to_string();
+
+        Ok(Script { id, output })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -244,6 +286,25 @@ mod test {
             host_err.to_string(),
             "error parsing Nmap XML output: failed to parse host start time"
         );
+    }
+
+    #[test]
+    fn host_with_multiple_script_output() {
+        let xml = r#"
+<host starttime="1623467939" endtime="1623467939"><status state="up" reason="conn-refused" reason_ttl="0"/>
+<address addr="192.168.1.70" addrtype="ipv4"/>
+<hostscript><script id="smb-print-text" output="false">false</script><script id="smb2-time" output="&#xa;  date: 2021-06-12T03:17:58&#xa;  start_date: N/A"><elem key="date">2021-06-12T03:17:58</elem>
+<elem key="start_date">N/A</elem>
+</script></hostscript><times srtt="5263" rttvar="4662" to="100000"/>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let script_host = Host::parse(ele).unwrap();
+        let script_output = script_host.scripts().collect::<Vec<_>>()[0];
+
+        assert_eq!(script_output.id, "smb-print-text");
+        assert_eq!(script_output.output, "false");
     }
 
     #[test]
