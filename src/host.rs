@@ -3,6 +3,7 @@ use roxmltree::Node;
 use std::net::IpAddr;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
+use macaddr::MacAddr6;
 
 use crate::port::PortInfo;
 use crate::Error;
@@ -10,7 +11,7 @@ use crate::Error;
 #[derive(Display, Clone, Debug, PartialEq)]
 pub enum Address {
     IpAddr(IpAddr),
-    MacAddr(String),
+    MacAddr(MacAddr6),
 }
 
 #[derive(Clone, Debug)]
@@ -98,7 +99,12 @@ fn parse_address_node(node: Node) -> Result<Address, Error> {
         .ok_or_else(|| Error::from("expected `addr` attribute in `address` node"))?;
 
     match addrtype {
-        "mac" => Ok(Address::MacAddr(addr.to_string())),
+        "mac" => {
+            let a = addr
+                .parse::<MacAddr6>()
+                .map_err(|_| Error::from("failed to parse MAC address"))?;
+            Ok(Address::MacAddr(a))
+        },
         _ => {
             let a = addr
                 .parse::<IpAddr>()

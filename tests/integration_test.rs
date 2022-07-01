@@ -190,7 +190,7 @@ fn host_portinfo_ports() {
 #[test]
 fn test_issue_one() {
     let ip: std::net::IpAddr = "192.168.59.138".parse().unwrap();
-    let mac = "00:0C:29:71:23:2B".to_string();
+    let mac: macaddr::MacAddr6 = "00:0C:29:71:23:2B".parse().unwrap();
 
     let host = NMAP_ISSUE_ONE.hosts().next().unwrap();
     assert!(host.addresses().count() == 2);
