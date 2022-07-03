@@ -24,7 +24,7 @@ pub struct Host {
     pub scan_start_time: Option<i64>,
     pub scan_end_time: Option<i64>,
     pub tcpsequence: Option<TcpSequence>,
-    pub ipidsequence: Option<IpIdSequence>
+    pub ipidsequence: Option<IpIdSequence>,
 }
 
 impl Host {
@@ -77,7 +77,7 @@ impl Host {
             scan_start_time,
             scan_end_time,
             tcpsequence,
-            ipidsequence
+            ipidsequence,
         })
     }
 
@@ -309,7 +309,7 @@ impl TcpSequence {
 #[derive(Clone, Debug, PartialEq)]
 pub struct IpIdSequence {
     pub class: String,
-    pub values: [u32; 6]
+    pub values: [u32; 6],
 }
 
 impl IpIdSequence {
@@ -330,10 +330,7 @@ impl IpIdSequence {
                 }
                 Ok(arr)
             })?;
-        Ok(IpIdSequence {
-            class,
-            values
-        })
+        Ok(IpIdSequence { class, values })
     }
 }
 
