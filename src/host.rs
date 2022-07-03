@@ -6,6 +6,7 @@ use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
 use crate::port::PortInfo;
+use crate::util::{node_attr_as_string, parse_node_attr};
 use crate::Error;
 
 #[derive(Display, Clone, Debug, PartialEq)]
@@ -169,18 +170,9 @@ impl HostStatus {
         let state =
             HostState::from_str(s).map_err(|_| Error::from("failed to parse host state"))?;
 
-        let reason = node
-            .attribute("reason")
-            .ok_or_else(|| Error::from("expected `reason` attribute in `hoststatus` node"))?
-            .to_string();
+        let reason = node_attr_as_string(node, "reason").unwrap();
 
-        let reason_ttl = node
-            .attribute("reason_ttl")
-            .ok_or_else(|| Error::from("expected `reason_ttl` attribute in `hoststatus` node"))
-            .and_then(|s| {
-                s.parse::<u8>()
-                    .map_err(|_| Error::from("failed to parse `reason_ttl`"))
-            })?;
+        let reason_ttl = parse_node_attr::<u8>(node, "reason_ttl").unwrap();
 
         Ok(HostStatus {
             state,
@@ -218,10 +210,7 @@ pub struct Hostname {
 
 impl Hostname {
     fn parse(node: Node) -> Result<Self, Error> {
-        let name = node
-            .attribute("name")
-            .ok_or_else(|| Error::from("expected `name` attribute in `hostname` node"))?
-            .to_string();
+        let name = node_attr_as_string(node, "name").unwrap();
 
         let s = node
             .attribute("type")
@@ -241,15 +230,9 @@ pub struct Script {
 
 impl Script {
     fn parse(node: Node) -> Result<Self, Error> {
-        let id = node
-            .attribute("id")
-            .ok_or_else(|| Error::from("expected `id` attribute in `script` node"))?
-            .to_string();
+        let id = node_attr_as_string(node, "id").unwrap();
 
-        let output = node
-            .attribute("output")
-            .ok_or_else(|| Error::from("expected `output` attribute in `script` node"))?
-            .to_string();
+        let output = node_attr_as_string(node, "output").unwrap();
 
         Ok(Script { id, output })
     }
@@ -263,15 +246,10 @@ pub struct Uptime {
 
 impl Uptime {
     fn parse(node: Node) -> Result<Self, Error> {
-        let seconds = node
-            .attribute("seconds")
-            .ok_or_else(|| Error::from("expected `seconds` attribute in `uptime` node"))?
-            .parse::<u64>()
-            .expect("Failed to parse `seconds` attribute in `uptime` node");
-        let lastboot = node
-            .attribute("lastboot")
-            .ok_or_else(|| Error::from("expected `lastboot` attribute in `uptime` node"))?
-            .to_string();
+        let seconds = parse_node_attr::<u64>(node, "seconds").unwrap();
+
+        let lastboot = node_attr_as_string(node, "lastboot").unwrap();
+
         Ok(Uptime { seconds, lastboot })
     }
 }
@@ -301,13 +279,7 @@ pub struct TcpSequence {
 
 impl TcpSequence {
     fn parse(node: Node) -> Result<Self, Error> {
-        let index = node
-            .attribute("index")
-            .ok_or_else(|| Error::from("expected `index` attribute in `tcpsequence` node"))
-            .and_then(|s| {
-                s.parse::<u32>()
-                    .map_err(|_| Error::from("failed to parse `index`"))
-            })?;
+        let index = parse_node_attr::<u32>(node, "index").unwrap();
 
         let values = node
             .attribute("values")
@@ -342,10 +314,7 @@ pub struct IpIdSequence {
 
 impl IpIdSequence {
     fn parse(node: Node) -> Result<Self, Error> {
-        let class = node
-            .attribute("class")
-            .ok_or_else(|| Error::from("expected `class` attribute in `ipidsequence` node"))?
-            .to_string();
+        let class = node_attr_as_string(node, "class").unwrap();
 
         let values = node
             .attribute("values")
@@ -370,10 +339,7 @@ pub struct TcpTsSequence {
 
 impl TcpTsSequence {
     fn parse(node: Node) -> Result<Self, Error> {
-        let class = node
-            .attribute("class")
-            .ok_or_else(|| Error::from("expected `class` attribute in `tcptssequence` node"))?
-            .to_string();
+        let class = node_attr_as_string(node, "class").unwrap();
 
         let values = node
             .attribute("values")
