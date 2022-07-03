@@ -34,6 +34,13 @@ lazy_static! {
         let content = fs::read_to_string(path).unwrap();
         NmapResults::parse(&content).unwrap()
     };
+    static ref NMAP_VERBOSE_SCAN: NmapResults = {
+        let mut path = PathBuf::new();
+        path.push(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        path.push("tests/verbose_scan.xml");
+        let content = fs::read_to_string(path).unwrap();
+        NmapResults::parse(&content).unwrap()
+    };
 }
 
 fn vectors_eq<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
@@ -232,4 +239,28 @@ fn test_host_down() {
     for host in NMAP_HOST_DOWN.hosts() {
         assert_eq!(host.status.state, HostState::Down);
     }
+}
+
+#[test]
+fn test_tcpsequence() {
+    use host::TcpDifficulty;
+
+    let expected_values: [u32; 6] = [
+        1224835593, 1220799469, 1230646911, 1228862220, 1223508915, 1230674700,
+    ];
+
+    let expected = host::TcpSequence {
+        index: 199,
+        difficulty: TcpDifficulty::Good,
+        values: expected_values,
+    };
+
+    let tcpsequence = NMAP_VERBOSE_SCAN
+        .hosts()
+        .next()
+        .unwrap()
+        .tcpsequence
+        .as_ref();
+
+    assert_eq!(tcpsequence.unwrap(), &expected);
 }

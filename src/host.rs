@@ -1,9 +1,9 @@
 //!Host related structs and enums.
+use macaddr::MacAddr6;
 use roxmltree::Node;
 use std::net::IpAddr;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
-use macaddr::MacAddr6;
 
 use crate::port::PortInfo;
 use crate::Error;
@@ -23,6 +23,7 @@ pub struct Host {
     pub port_info: PortInfo,
     pub scan_start_time: Option<i64>,
     pub scan_end_time: Option<i64>,
+    pub tcpsequence: Option<TcpSequence>,
 }
 
 impl Host {
@@ -48,6 +49,7 @@ impl Host {
         let mut port_info = Default::default();
         let mut scripts = Vec::new();
         let mut addresses = Vec::new();
+        let mut tcpsequence = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -56,6 +58,7 @@ impl Host {
                 "hostnames" => host_names = parse_hostnames_node(child)?,
                 "hostscript" => scripts = parse_hostscript_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
+                "tcpsequence" => tcpsequence = Some(TcpSequence::parse(child)?),
                 _ => {}
             }
         }
@@ -70,6 +73,7 @@ impl Host {
             port_info,
             scan_start_time,
             scan_end_time,
+            tcpsequence,
         })
     }
 
@@ -104,7 +108,7 @@ fn parse_address_node(node: Node) -> Result<Address, Error> {
                 .parse::<MacAddr6>()
                 .map_err(|_| Error::from("failed to parse MAC address"))?;
             Ok(Address::MacAddr(a))
-        },
+        }
         _ => {
             let a = addr
                 .parse::<IpAddr>()
@@ -236,6 +240,65 @@ impl Script {
             .to_string();
 
         Ok(Script { id, output })
+    }
+}
+
+#[derive(EnumString, Display, Clone, Debug, PartialEq)]
+pub enum TcpDifficulty {
+    #[strum(serialize = "Trivial joke")]
+    Trivial,
+    #[strum(serialize = "Easy")]
+    Easy,
+    #[strum(serialize = "Medium")]
+    Medium,
+    #[strum(serialize = "Formidable")]
+    Formidable,
+    #[strum(serialize = "Worthy challenge")]
+    Worthy,
+    #[strum(serialize = "Good luck!")]
+    Good,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct TcpSequence {
+    pub index: u32,
+    pub values: [u32; 6],
+    pub difficulty: TcpDifficulty,
+}
+
+impl TcpSequence {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let index = node
+            .attribute("index")
+            .ok_or_else(|| Error::from("expected `index` attribute in `tcpsequence` node"))
+            .and_then(|s| {
+                s.parse::<u32>()
+                    .map_err(|_| Error::from("failed to parse `index`"))
+            })?;
+
+        let values = node
+            .attribute("values")
+            .ok_or_else(|| Error::from("expected `values` attribute in `tcpsequence` node"))
+            .and_then(|s| {
+                let mut arr: [u32; 6] = [0; 6];
+                for (elem, val) in arr.iter_mut().zip(s.split(",")) {
+                    //*elem = val.parse::<u32>().expect("Failed to parse `values` in `tcpsequence` node");
+                    *elem = u32::from_str_radix(val, 16).unwrap();
+                }
+                Ok(arr)
+            })?;
+
+        let d = node
+            .attribute("difficulty")
+            .ok_or_else(|| Error::from("expected `difficulty` attribute in `tcpsequence` node"))?;
+        let difficulty = TcpDifficulty::from_str(d)
+            .map_err(|_| Error::from("failed to parse tcp sequence prediction difficulty"))?;
+
+        Ok(TcpSequence {
+            index,
+            values,
+            difficulty,
+        })
     }
 }
 
