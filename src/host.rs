@@ -24,6 +24,7 @@ pub struct Host {
     pub scan_start_time: Option<i64>,
     pub scan_end_time: Option<i64>,
     pub tcpsequence: Option<TcpSequence>,
+    pub ipidsequence: Option<IpIdSequence>
 }
 
 impl Host {
@@ -50,6 +51,7 @@ impl Host {
         let mut scripts = Vec::new();
         let mut addresses = Vec::new();
         let mut tcpsequence = None;
+        let mut ipidsequence = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -59,6 +61,7 @@ impl Host {
                 "hostscript" => scripts = parse_hostscript_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
                 "tcpsequence" => tcpsequence = Some(TcpSequence::parse(child)?),
+                "ipidsequence" => ipidsequence = Some(IpIdSequence::parse(child)?),
                 _ => {}
             }
         }
@@ -74,6 +77,7 @@ impl Host {
             scan_start_time,
             scan_end_time,
             tcpsequence,
+            ipidsequence
         })
     }
 
@@ -298,6 +302,37 @@ impl TcpSequence {
             index,
             values,
             difficulty,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct IpIdSequence {
+    pub class: String,
+    pub values: [u32; 6]
+}
+
+impl IpIdSequence {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let class = node
+            .attribute("class")
+            .ok_or_else(|| Error::from("expected `class` attribute in `ipidsequence` node"))?
+            .to_string();
+
+        let values = node
+            .attribute("values")
+            .ok_or_else(|| Error::from("expected `values` attribute in `tcpsequence` node"))
+            .and_then(|s| {
+                let mut arr: [u32; 6] = [0; 6];
+                for (elem, val) in arr.iter_mut().zip(s.split(",")) {
+                    //*elem = val.parse::<u32>().expect("Failed to parse `values` in `tcpsequence` node");
+                    *elem = u32::from_str_radix(val, 16).unwrap();
+                }
+                Ok(arr)
+            })?;
+        Ok(IpIdSequence {
+            class,
+            values
         })
     }
 }

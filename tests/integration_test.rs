@@ -264,3 +264,25 @@ fn test_tcpsequence() {
 
     assert_eq!(tcpsequence.unwrap(), &expected);
 }
+
+#[test]
+fn test_ipidsequence() {
+    let expected_values: [u32; 6] = [
+        0, 0, 0, 0, 0, 0
+    ];
+
+    let expected = host::IpIdSequence {
+        class: String::from("All zeros"),
+        values: expected_values
+    };
+
+    let ipidsequence = NMAP_VERBOSE_SCAN
+        .hosts()
+        .next()
+        .unwrap()
+        .ipidsequence
+        .as_ref();
+
+    assert_eq!(ipidsequence.unwrap(), &expected);
+
+}
