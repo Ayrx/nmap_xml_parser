@@ -26,6 +26,7 @@ pub struct Host {
     pub tcpsequence: Option<TcpSequence>,
     pub ipidsequence: Option<IpIdSequence>,
     pub tcptssequence: Option<TcpTsSequence>,
+    pub uptime: Option<Uptime>,
 }
 
 impl Host {
@@ -54,6 +55,7 @@ impl Host {
         let mut tcpsequence = None;
         let mut ipidsequence = None;
         let mut tcptssequence = None;
+        let mut uptime = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -65,6 +67,7 @@ impl Host {
                 "tcpsequence" => tcpsequence = Some(TcpSequence::parse(child)?),
                 "ipidsequence" => ipidsequence = Some(IpIdSequence::parse(child)?),
                 "tcptssequence" => tcptssequence = Some(TcpTsSequence::parse(child)?),
+                "uptime" => uptime = Some(Uptime::parse(child)?),
                 _ => {}
             }
         }
@@ -82,6 +85,7 @@ impl Host {
             tcpsequence,
             ipidsequence,
             tcptssequence,
+            uptime,
         })
     }
 
@@ -251,6 +255,27 @@ impl Script {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Uptime {
+    pub seconds: u64,
+    pub lastboot: String,
+}
+
+impl Uptime {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let seconds = node
+            .attribute("seconds")
+            .ok_or_else(|| Error::from("expected `seconds` attribute in `uptime` node"))?
+            .parse::<u64>()
+            .expect("Failed to parse `seconds` attribute in `uptime` node");
+        let lastboot = node
+            .attribute("lastboot")
+            .ok_or_else(|| Error::from("expected `lastboot` attribute in `uptime` node"))?
+            .to_string();
+        Ok(Uptime { seconds, lastboot })
+    }
+}
+
 #[derive(EnumString, Display, Clone, Debug, PartialEq)]
 pub enum TcpDifficulty {
     #[strum(serialize = "Trivial joke")]
@@ -290,7 +315,6 @@ impl TcpSequence {
             .and_then(|s| {
                 let mut arr: [u32; 6] = [0; 6];
                 for (elem, val) in arr.iter_mut().zip(s.split(",")) {
-                    //*elem = val.parse::<u32>().expect("Failed to parse `values` in `tcpsequence` node");
                     *elem = u32::from_str_radix(val, 16).unwrap();
                 }
                 Ok(arr)

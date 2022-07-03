@@ -302,3 +302,15 @@ fn test_tcptssequence() {
 
     assert_eq!(tcptssequence.unwrap(), &expected);
 }
+
+#[test]
+fn test_uptime() {
+    let expected = host::Uptime {
+        seconds: 23450,
+        lastboot: String::from("Fri Sep  9 12:03:04 2011"),
+    };
+
+    let uptime = NMAP_VERBOSE_SCAN.hosts().next().unwrap().uptime.as_ref();
+
+    assert_eq!(uptime.unwrap(), &expected);
+}
