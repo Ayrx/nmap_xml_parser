@@ -283,3 +283,22 @@ fn test_ipidsequence() {
 
     assert_eq!(ipidsequence.unwrap(), &expected);
 }
+
+#[test]
+fn test_tcptssequence() {
+    let expected_values: [u32; 6] = [23448585, 23448686, 23448786, 23448886, 23448986, 23449160];
+
+    let expected = host::TcpTsSequence {
+        class: String::from("1000HZ"),
+        values: expected_values,
+    };
+
+    let tcptssequence = NMAP_VERBOSE_SCAN
+        .hosts()
+        .next()
+        .unwrap()
+        .tcptssequence
+        .as_ref();
+
+    assert_eq!(tcptssequence.unwrap(), &expected);
+}

@@ -25,6 +25,7 @@ pub struct Host {
     pub scan_end_time: Option<i64>,
     pub tcpsequence: Option<TcpSequence>,
     pub ipidsequence: Option<IpIdSequence>,
+    pub tcptssequence: Option<TcpTsSequence>,
 }
 
 impl Host {
@@ -52,6 +53,7 @@ impl Host {
         let mut addresses = Vec::new();
         let mut tcpsequence = None;
         let mut ipidsequence = None;
+        let mut tcptssequence = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -62,6 +64,7 @@ impl Host {
                 "ports" => port_info = PortInfo::parse(child)?,
                 "tcpsequence" => tcpsequence = Some(TcpSequence::parse(child)?),
                 "ipidsequence" => ipidsequence = Some(IpIdSequence::parse(child)?),
+                "tcptssequence" => tcptssequence = Some(TcpTsSequence::parse(child)?),
                 _ => {}
             }
         }
@@ -78,6 +81,7 @@ impl Host {
             scan_end_time,
             tcpsequence,
             ipidsequence,
+            tcptssequence,
         })
     }
 
@@ -321,7 +325,7 @@ impl IpIdSequence {
 
         let values = node
             .attribute("values")
-            .ok_or_else(|| Error::from("expected `values` attribute in `tcpsequence` node"))
+            .ok_or_else(|| Error::from("expected `values` attribute in `ipidsequence` node"))
             .and_then(|s| {
                 let mut arr: [u32; 6] = [0; 6];
                 for (elem, val) in arr.iter_mut().zip(s.split(",")) {
@@ -331,6 +335,34 @@ impl IpIdSequence {
                 Ok(arr)
             })?;
         Ok(IpIdSequence { class, values })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct TcpTsSequence {
+    pub class: String,
+    pub values: [u32; 6],
+}
+
+impl TcpTsSequence {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let class = node
+            .attribute("class")
+            .ok_or_else(|| Error::from("expected `class` attribute in `tcptssequence` node"))?
+            .to_string();
+
+        let values = node
+            .attribute("values")
+            .ok_or_else(|| Error::from("expected `values` attribute in `tcptssequence` node"))
+            .and_then(|s| {
+                let mut arr: [u32; 6] = [0; 6];
+                for (elem, val) in arr.iter_mut().zip(s.split(",")) {
+                    //*elem = val.parse::<u32>().expect("Failed to parse `values` in `tcpsequence` node");
+                    *elem = u32::from_str_radix(val, 16).unwrap();
+                }
+                Ok(arr)
+            })?;
+        Ok(TcpTsSequence { class, values })
     }
 }
 
