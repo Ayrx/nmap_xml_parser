@@ -6,6 +6,7 @@ use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
 use crate::port::PortInfo;
+use crate::port::PortUsed;
 use crate::util::{node_attr_as_string, parse_node_attr};
 use crate::Error;
 
@@ -28,6 +29,7 @@ pub struct Host {
     pub ipidsequence: Option<IpIdSequence>,
     pub tcptssequence: Option<TcpTsSequence>,
     pub uptime: Option<Uptime>,
+    pub os: Option<Os>,
 }
 
 impl Host {
@@ -57,6 +59,7 @@ impl Host {
         let mut ipidsequence = None;
         let mut tcptssequence = None;
         let mut uptime = None;
+        let mut os = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -69,6 +72,7 @@ impl Host {
                 "ipidsequence" => ipidsequence = Some(IpIdSequence::parse(child)?),
                 "tcptssequence" => tcptssequence = Some(TcpTsSequence::parse(child)?),
                 "uptime" => uptime = Some(Uptime::parse(child)?),
+                "os" => os = Some(Os::parse(child)?),
                 _ => {}
             }
         }
@@ -87,6 +91,7 @@ impl Host {
             ipidsequence,
             tcptssequence,
             uptime,
+            os,
         })
     }
 
@@ -235,6 +240,100 @@ impl Script {
         let output = node_attr_as_string(node, "output").unwrap();
 
         Ok(Script { id, output })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Cpe {
+    pub cpe: String,
+}
+
+impl Cpe {
+    fn parse(node: Node) -> Result<Self, Error> {
+        Ok(Cpe {
+            cpe: String::from(node.text().unwrap()),
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OsClass {
+    pub r#type: String,
+    pub vendor: String,
+    pub osfamily: String,
+    pub osgen: String,
+    pub accuracy: u8,
+    pub cpe: Cpe,
+}
+
+impl OsClass {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let r#type = node_attr_as_string(node, "type").unwrap();
+        let vendor = node_attr_as_string(node, "vendor").unwrap();
+        let osfamily = node_attr_as_string(node, "osfamily").unwrap();
+        let osgen = node_attr_as_string(node, "osgen").unwrap();
+        let accuracy = parse_node_attr::<u8>(node, "accuracy").unwrap();
+        let cpe = Cpe::parse(node.first_child().unwrap()).unwrap();
+        Ok(OsClass {
+            r#type,
+            vendor,
+            osfamily,
+            osgen,
+            accuracy,
+            cpe,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OsMatch {
+    pub name: String,
+    pub accuracy: u8,
+    pub line: u32,
+    pub os_classes: Vec<OsClass>,
+}
+
+impl OsMatch {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let name = node_attr_as_string(node, "name").unwrap();
+        let accuracy = parse_node_attr::<u8>(node, "accuracy").unwrap();
+        let line = parse_node_attr::<u32>(node, "line").unwrap();
+        let mut os_classes = Vec::<OsClass>::new();
+        for child in node.children() {
+            if child.has_tag_name("osclass") {
+                os_classes.push(OsClass::parse(child)?)
+            }
+        }
+        Ok(OsMatch {
+            name,
+            accuracy,
+            line,
+            os_classes,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Os {
+    pub ports_used: Vec<PortUsed>,
+    pub os_matched: Vec<OsMatch>,
+}
+
+impl Os {
+    fn parse(node: Node) -> Result<Self, Error> {
+        let mut ports_used = Vec::<PortUsed>::new();
+        let mut os_matched = Vec::<OsMatch>::new();
+        for child in node.children() {
+            match child.tag_name().name() {
+                "portused" => ports_used.push(PortUsed::parse(child)?),
+                "osmatch" => os_matched.push(OsMatch::parse(child)?),
+                _ => {}
+            }
+        }
+        Ok(Os {
+            ports_used,
+            os_matched,
+        })
     }
 }
 

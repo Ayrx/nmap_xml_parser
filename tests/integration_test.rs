@@ -34,10 +34,17 @@ lazy_static! {
         let content = fs::read_to_string(path).unwrap();
         NmapResults::parse(&content).unwrap()
     };
-    static ref NMAP_VERBOSE_SCAN: NmapResults = {
+    static ref NMAP_VERBOSE_SCAN_1: NmapResults = {
         let mut path = PathBuf::new();
         path.push(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
-        path.push("tests/verbose_scan.xml");
+        path.push("tests/verbose_scan_1.xml");
+        let content = fs::read_to_string(path).unwrap();
+        NmapResults::parse(&content).unwrap()
+    };
+    static ref NMAP_VERBOSE_SCAN_2: NmapResults = {
+        let mut path = PathBuf::new();
+        path.push(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        path.push("tests/verbose_scan_2.xml");
         let content = fs::read_to_string(path).unwrap();
         NmapResults::parse(&content).unwrap()
     };
@@ -255,7 +262,7 @@ fn test_tcpsequence() {
         values: expected_values,
     };
 
-    let tcpsequence = NMAP_VERBOSE_SCAN
+    let tcpsequence = NMAP_VERBOSE_SCAN_1
         .hosts()
         .next()
         .unwrap()
@@ -274,7 +281,7 @@ fn test_ipidsequence() {
         values: expected_values,
     };
 
-    let ipidsequence = NMAP_VERBOSE_SCAN
+    let ipidsequence = NMAP_VERBOSE_SCAN_1
         .hosts()
         .next()
         .unwrap()
@@ -293,7 +300,7 @@ fn test_tcptssequence() {
         values: expected_values,
     };
 
-    let tcptssequence = NMAP_VERBOSE_SCAN
+    let tcptssequence = NMAP_VERBOSE_SCAN_1
         .hosts()
         .next()
         .unwrap()
@@ -310,7 +317,85 @@ fn test_uptime() {
         lastboot: String::from("Fri Sep  9 12:03:04 2011"),
     };
 
-    let uptime = NMAP_VERBOSE_SCAN.hosts().next().unwrap().uptime.as_ref();
+    let uptime = NMAP_VERBOSE_SCAN_1.hosts().next().unwrap().uptime.as_ref();
 
     assert_eq!(uptime.unwrap(), &expected);
+}
+
+#[test]
+fn test_os() {
+    use host::{Cpe, OsClass, OsMatch};
+    use port::{PortProtocol, PortState, PortUsed};
+
+    let p1 = PortUsed {
+        state: PortState::Open,
+        proto: PortProtocol::Tcp,
+        port_number: 22,
+    };
+    let p2 = PortUsed {
+        state: PortState::Closed,
+        proto: PortProtocol::Tcp,
+        port_number: 1,
+    };
+    let p3 = PortUsed {
+        state: PortState::Closed,
+        proto: PortProtocol::Udp,
+        port_number: 37776,
+    };
+
+    let c1 = OsClass {
+        r#type: "general purpose".to_string(),
+        vendor: "Linux".to_string(),
+        osfamily: "Linux".to_string(),
+        osgen: "2.6.X".to_string(),
+        accuracy: 93,
+        cpe: Cpe {
+            cpe: "cpe:/o:linux:linux_kernel:2.6.32".to_string(),
+        },
+    };
+
+    let c2 = OsClass {
+        r#type: "general purpose".to_string(),
+        vendor: "Linux".to_string(),
+        osfamily: "Linux".to_string(),
+        osgen: "2.6.X".to_string(),
+        accuracy: 93,
+        cpe: Cpe {
+            cpe: "cpe:/o:linux:linux_kernel:2.6.32".to_string(),
+        },
+    };
+
+    let c3 = OsClass {
+        r#type: "general purpose".to_string(),
+        vendor: "Linux".to_string(),
+        osfamily: "Linux".to_string(),
+        osgen: "3.X".to_string(),
+        accuracy: 93,
+        cpe: Cpe {
+            cpe: "cpe:/o:linux:linux_kernel:3.10".to_string(),
+        },
+    };
+
+    let o1 = OsMatch {
+        name: "Linux 2.6.32".to_string(),
+        accuracy: 93,
+        line: 54319,
+        os_classes: vec![c1],
+    };
+
+    let o2 = OsMatch {
+        name: "Linux 2.6.32 or 3.10".to_string(),
+        accuracy: 93,
+        line: 56843,
+        os_classes: vec![c2, c3],
+    };
+
+    let expected = host::Os {
+        ports_used: vec![p1, p2, p3],
+        os_matched: vec![o1, o2],
+    };
+
+    let os = NMAP_VERBOSE_SCAN_2.hosts().next().unwrap().os.as_ref();
+
+    assert_eq![os.unwrap(), &expected];
 }

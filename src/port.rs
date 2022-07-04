@@ -3,6 +3,8 @@ use roxmltree::Node;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
+use crate::util::node_attr_as_string;
+use crate::util::parse_node_attr;
 use crate::Error;
 
 #[derive(Clone, Debug, Default)]
@@ -47,13 +49,7 @@ impl Port {
         let protocol =
             PortProtocol::from_str(s).map_err(|_| Error::from("failed to parse port protocol"))?;
 
-        let port_number = node
-            .attribute("portid")
-            .ok_or_else(|| Error::from("expected `portid` attribute in `port` node"))
-            .and_then(|s| {
-                s.parse::<u16>()
-                    .map_err(|_| Error::from("failed to parse port ID"))
-            })?;
+        let port_number = parse_node_attr::<u16>(node, "portid").unwrap();
 
         let mut status = None;
         let mut service_info = None;
@@ -104,18 +100,9 @@ impl PortStatus {
         let state =
             PortState::from_str(s).map_err(|_| Error::from("failed to parse port state"))?;
 
-        let reason = node
-            .attribute("reason")
-            .ok_or_else(|| Error::from("expected `reason` attribute for port"))?
-            .to_string();
+        let reason = node_attr_as_string(node, "reason").unwrap();
 
-        let reason_ttl = node
-            .attribute("reason_ttl")
-            .ok_or_else(|| Error::from("expected `reason_ttl` attribute for port"))
-            .and_then(|s| {
-                s.parse::<u8>()
-                    .map_err(|_| Error::from("failed to parse port reason_ttl"))
-            })?;
+        let reason_ttl = parse_node_attr::<u8>(node, "reason_ttl").unwrap();
 
         Ok(PortStatus {
             state,
@@ -183,4 +170,41 @@ pub enum ServiceMethod {
     Table,
     #[strum(serialize = "probed")]
     Probe,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct PortUsed {
+    pub state: PortState,
+    pub proto: PortProtocol,
+    pub port_number: u16,
+}
+
+impl PortUsed {
+    pub fn parse(node: Node) -> Result<Self, Error> {
+        let s = node
+            .attribute("state")
+            .ok_or_else(|| Error::from("expected `state` attribute in `portused` node"))?;
+        let state =
+            PortState::from_str(s).map_err(|_| Error::from("failed to parse port state"))?;
+
+        let p = node
+            .attribute("proto")
+            .ok_or_else(|| Error::from("expected `proto` attribute in `portused` node"))?;
+        let proto =
+            PortProtocol::from_str(p).map_err(|_| Error::from("failed to parse port protocol"))?;
+
+        let port_number = node
+            .attribute("portid")
+            .ok_or_else(|| Error::from("expected `port_id` attribute in `portused` node"))
+            .and_then(|s| {
+                s.parse::<u16>()
+                    .map_err(|_| Error::from("failed to parse portused port_id"))
+            })?;
+
+        Ok(PortUsed {
+            state,
+            proto,
+            port_number,
+        })
+    }
 }
