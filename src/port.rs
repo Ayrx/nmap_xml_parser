@@ -2,8 +2,10 @@
 use roxmltree::Node;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
+use const_format::formatcp;
 
 use crate::Error;
+use crate::util::{parse_node_attr, node_attr_as_string};
 
 #[derive(Clone, Debug, Default)]
 pub struct PortInfo {
@@ -47,13 +49,7 @@ impl Port {
         let protocol =
             PortProtocol::from_str(s).map_err(|_| Error::from("failed to parse port protocol"))?;
 
-        let port_number = node
-            .attribute("portid")
-            .ok_or_else(|| Error::from("expected `portid` attribute in `port` node"))
-            .and_then(|s| {
-                s.parse::<u16>()
-                    .map_err(|_| Error::from("failed to parse port ID"))
-            })?;
+        let port_number = parse_node_attr!(node, "port", "portid", u16)?;
 
         let mut status = None;
         let mut service_info = None;
@@ -104,18 +100,9 @@ impl PortStatus {
         let state =
             PortState::from_str(s).map_err(|_| Error::from("failed to parse port state"))?;
 
-        let reason = node
-            .attribute("reason")
-            .ok_or_else(|| Error::from("expected `reason` attribute for port"))?
-            .to_string();
+        let reason = node_attr_as_string!(node, "port", "reason");
 
-        let reason_ttl = node
-            .attribute("reason_ttl")
-            .ok_or_else(|| Error::from("expected `reason_ttl` attribute for port"))
-            .and_then(|s| {
-                s.parse::<u8>()
-                    .map_err(|_| Error::from("failed to parse port reason_ttl"))
-            })?;
+        let reason_ttl = parse_node_attr!(node, "port", "reason_ttl", u8)?;
 
         Ok(PortStatus {
             state,
@@ -150,18 +137,9 @@ pub struct ServiceInfo {
 
 impl ServiceInfo {
     fn parse(node: Node) -> Result<Self, Error> {
-        let name = node
-            .attribute("name")
-            .ok_or_else(|| Error::from("expected `name` attribute for service"))?
-            .to_string();
+        let name = node_attr_as_string!(node, "service", "name");
 
-        let confidence_level = node
-            .attribute("conf")
-            .ok_or_else(|| Error::from("expected `conf` attribute for service"))
-            .and_then(|s| {
-                s.parse::<u8>()
-                    .map_err(|_| Error::from("failed to parse port reason_ttl"))
-            })?;
+        let confidence_level = parse_node_attr!(node, "service", "conf", u8)?;
 
         let s = node
             .attribute("method")

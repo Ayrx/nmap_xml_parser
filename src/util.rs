@@ -20,7 +20,7 @@ macro_rules! parse_node_attr {
 
 macro_rules! node_attr_as_string {
     ($node:expr, $nodename:expr, $attribute:expr) => {{
-        Ok($node
+        $node
             .attribute($attribute)
             .ok_or_else(|| {
                 Error::from(formatcp!(
@@ -29,7 +29,7 @@ macro_rules! node_attr_as_string {
                     $nodename
                 ))
             })?
-            .to_string())
+            .to_string()
     }};
 }
 

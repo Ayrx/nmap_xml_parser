@@ -149,18 +149,9 @@ impl HostStatus {
         let state =
             HostState::from_str(s).map_err(|_| Error::from("failed to parse host state"))?;
 
-        let reason = node
-            .attribute("reason")
-            .ok_or_else(|| Error::from("expected `reason` attribute in `hoststatus` node"))?
-            .to_string();
+        let reason = node_attr_as_string!(node, "hoststatus", "reason");
 
-        let reason_ttl = node
-            .attribute("reason_ttl")
-            .ok_or_else(|| Error::from("expected `reason_ttl` attribute in `hoststatus` node"))
-            .and_then(|s| {
-                s.parse::<u8>()
-                    .map_err(|_| Error::from("failed to parse `reason_ttl`"))
-            })?;
+        let reason_ttl = parse_node_attr!(node, "hoststatus", "reason_ttl", u8)?;
 
         Ok(HostStatus {
             state,
@@ -198,10 +189,8 @@ pub struct Hostname {
 
 impl Hostname {
     fn parse(node: Node) -> Result<Self, Error> {
-        let name = node
-            .attribute("name")
-            .ok_or_else(|| Error::from("expected `name` attribute in `hostname` node"))?
-            .to_string();
+
+        let name = node_attr_as_string!(node, "hostname", "name");
 
         let s = node
             .attribute("type")
@@ -221,15 +210,10 @@ pub struct Script {
 
 impl Script {
     fn parse(node: Node) -> Result<Self, Error> {
-        let id = node
-            .attribute("id")
-            .ok_or_else(|| Error::from("expected `id` attribute in `script` node"))?
-            .to_string();
 
-        let output = node
-            .attribute("output")
-            .ok_or_else(|| Error::from("expected `output` attribute in `script` node"))?
-            .to_string();
+        let id = node_attr_as_string!(node, "script", "id");
+
+        let output = node_attr_as_string!(node, "script", "output");
 
         Ok(Script { id, output })
     }
