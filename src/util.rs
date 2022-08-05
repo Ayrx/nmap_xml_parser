@@ -1,5 +1,3 @@
-use const_format::formatcp;
-
 macro_rules! parse_node_attr {
     ($node:expr, $nodename:expr, $attribute:expr, $type:ty) => {{
         $node
