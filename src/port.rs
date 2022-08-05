@@ -4,7 +4,7 @@ use roxmltree::Node;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
-use crate::util::{node_attr_as_string, parse_node_attr};
+use crate::util::{from_node_attr, node_attr_as_string, parse_node_attr};
 use crate::Error;
 
 #[derive(Clone, Debug, Default)]
@@ -43,13 +43,9 @@ pub struct Port {
 
 impl Port {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node
-            .attribute("protocol")
-            .ok_or_else(|| Error::from("expected `protocol` attribute in `port` node"))?;
-        let protocol =
-            PortProtocol::from_str(s).map_err(|_| Error::from("failed to parse port protocol"))?;
+        let protocol = from_node_attr!(node, "port", "protocol", PortProtocol);
 
-        let port_number = parse_node_attr!(node, "port", "portid", u16)?;
+        let port_number = parse_node_attr!(node, "port", "portid", u16);
 
         let mut status = None;
         let mut service_info = None;
@@ -94,15 +90,11 @@ pub struct PortStatus {
 
 impl PortStatus {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node
-            .attribute("state")
-            .ok_or_else(|| Error::from("expected `state` attribute for port"))?;
-        let state =
-            PortState::from_str(s).map_err(|_| Error::from("failed to parse port state"))?;
+        let state = from_node_attr!(node, "port", "state", PortState);
 
         let reason = node_attr_as_string!(node, "port", "reason");
 
-        let reason_ttl = parse_node_attr!(node, "port", "reason_ttl", u8)?;
+        let reason_ttl = parse_node_attr!(node, "port", "reason_ttl", u8);
 
         Ok(PortStatus {
             state,
@@ -139,13 +131,9 @@ impl ServiceInfo {
     fn parse(node: Node) -> Result<Self, Error> {
         let name = node_attr_as_string!(node, "service", "name");
 
-        let confidence_level = parse_node_attr!(node, "service", "conf", u8)?;
+        let confidence_level = parse_node_attr!(node, "service", "conf", u8);
 
-        let s = node
-            .attribute("method")
-            .ok_or_else(|| Error::from("expected `method` attribute for service"))?;
-        let method = ServiceMethod::from_str(s)
-            .map_err(|_| Error::from("failed to parse service method"))?;
+        let method = from_node_attr!(node, "service", "method", ServiceMethod);
 
         Ok(ServiceInfo {
             name,

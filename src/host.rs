@@ -143,15 +143,11 @@ pub struct HostStatus {
 
 impl HostStatus {
     fn parse(node: Node) -> Result<Self, Error> {
-        let s = node
-            .attribute("state")
-            .ok_or_else(|| Error::from("expected `state` attribute in `hoststatus` node"))?;
-        let state =
-            HostState::from_str(s).map_err(|_| Error::from("failed to parse host state"))?;
+        let state = from_node_attr!(node, "hoststatus", "state", HostState);
 
         let reason = node_attr_as_string!(node, "hoststatus", "reason");
 
-        let reason_ttl = parse_node_attr!(node, "hoststatus", "reason_ttl", u8)?;
+        let reason_ttl = parse_node_attr!(node, "hoststatus", "reason_ttl", u8);
 
         Ok(HostStatus {
             state,
@@ -191,11 +187,7 @@ impl Hostname {
     fn parse(node: Node) -> Result<Self, Error> {
         let name = node_attr_as_string!(node, "hostname", "name");
 
-        let s = node
-            .attribute("type")
-            .ok_or_else(|| Error::from("expected `type` attribute in `hostname` node"))?;
-        let source = HostnameType::from_str(s)
-            .map_err(|_| Error::from("expected `source` attribute in `address` node"))?;
+        let source = from_node_attr!(node, "hostname", "type", HostnameType);
 
         Ok(Hostname { name, source })
     }

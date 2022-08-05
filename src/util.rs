@@ -14,7 +14,7 @@ macro_rules! parse_node_attr {
             .and_then(|s| {
                 s.parse::<$type>()
                     .map_err(|_| Error::from(formatcp!("failed to parse `{}`", $attribute)))
-            })
+            })?
     }};
 }
 
@@ -42,7 +42,8 @@ macro_rules! from_node_attr {
                 $nodename
             ))
         })?;
-        $type::from_str(s).map_err(|_| Error::from(formatcp!("failed to parse {}", $attribute)))?;
+        <$type>::from_str(s)
+            .map_err(|_| Error::from(formatcp!("failed to parse {}", stringify!($type))))?
     }};
 }
 
