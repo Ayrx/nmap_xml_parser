@@ -41,7 +41,7 @@ macro_rules! from_node_attr {
             ))
         })?;
         <$type>::from_str(s)
-            .map_err(|_| Error::from(formatcp!("failed to parse {}", stringify!($type))))?
+            .map_err(|_| Error::from(formatcp!("failed to parse `{}`", stringify!($type))))?
     }};
 }
 
