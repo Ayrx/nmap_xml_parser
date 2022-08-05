@@ -1,10 +1,12 @@
 //!Host related structs and enums.
+use const_format::formatcp;
 use roxmltree::Node;
 use std::net::IpAddr;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
 use crate::port::PortInfo;
+use crate::util::{node_attr_as_string, parse_node_attr};
 use crate::Error;
 
 #[derive(Display, Clone, Debug, PartialEq)]

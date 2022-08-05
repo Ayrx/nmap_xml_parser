@@ -25,6 +25,7 @@ use roxmltree::{Document, Node};
 
 pub mod host;
 pub mod port;
+pub mod util;
 
 use crate::host::Host;
 use crate::port::Port;

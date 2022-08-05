@@ -14,6 +14,7 @@ roxmltree = "0.11.0"
 thiserror = "1.0.16"
 strum = "0.18.0"
 strum_macros = "0.18.0"
+const_format = "0.2.26"
 
 [dev-dependencies]
 lazy_static = "1.4.0"
