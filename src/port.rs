@@ -1,11 +1,11 @@
 //!Port related structs and enums.
+use const_format::formatcp;
 use roxmltree::Node;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
-use const_format::formatcp;
 
+use crate::util::{node_attr_as_string, parse_node_attr};
 use crate::Error;
-use crate::util::{parse_node_attr, node_attr_as_string};
 
 #[derive(Clone, Debug, Default)]
 pub struct PortInfo {

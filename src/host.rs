@@ -6,7 +6,7 @@ use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
 use crate::port::PortInfo;
-use crate::util::{node_attr_as_string, parse_node_attr};
+use crate::util::{from_node_attr, node_attr_as_string, parse_node_attr};
 use crate::Error;
 
 #[derive(Display, Clone, Debug, PartialEq)]
@@ -189,7 +189,6 @@ pub struct Hostname {
 
 impl Hostname {
     fn parse(node: Node) -> Result<Self, Error> {
-
         let name = node_attr_as_string!(node, "hostname", "name");
 
         let s = node
@@ -210,7 +209,6 @@ pub struct Script {
 
 impl Script {
     fn parse(node: Node) -> Result<Self, Error> {
-
         let id = node_attr_as_string!(node, "script", "id");
 
         let output = node_attr_as_string!(node, "script", "output");
