@@ -1,9 +1,9 @@
 //!Host related structs and enums.
+use crate::{port::PortInfo, Error};
 use roxmltree::Node;
-use std::{net::IpAddr};
+use std::net::IpAddr;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
-use crate::{Error, port::PortInfo};
 
 #[derive(Display, Clone, Debug, PartialEq)]
 pub enum Address {
@@ -287,8 +287,6 @@ impl PortUsed {
             .ok_or_else(|| Error::from("expected `portid` attribute in `portused` node"))?
             .to_string();
 
-            
-
         Ok(Self {
             state,
             proto,
@@ -357,9 +355,18 @@ impl OsMatch {
             .map(|n| OsClass::from_node(&n).unwrap())
             .collect();
 
-        let name = node.attribute("name").ok_or_else(|| Error::from("expected `name` attribute in `OsMatch` node"))?.to_string();
-        let accuracy = node.attribute("accuracy").ok_or_else(|| Error::from("expected `accuracy` attribute in `OsMatch` node"))?.to_string();
-        let line = node.attribute("line").ok_or_else(|| Error::from("expected `line` attribute in `OsMatch` node"))?.to_string();
+        let name = node
+            .attribute("name")
+            .ok_or_else(|| Error::from("expected `name` attribute in `OsMatch` node"))?
+            .to_string();
+        let accuracy = node
+            .attribute("accuracy")
+            .ok_or_else(|| Error::from("expected `accuracy` attribute in `OsMatch` node"))?
+            .to_string();
+        let line = node
+            .attribute("line")
+            .ok_or_else(|| Error::from("expected `line` attribute in `OsMatch` node"))?
+            .to_string();
 
         Ok(Self {
             osclass,
@@ -377,7 +384,10 @@ pub struct OsFingerprint {
 
 impl OsFingerprint {
     pub fn parse(node: &Node) -> Result<Self, Error> {
-        let fingerprint = node.attribute("fingerprint").ok_or_else(|| Error::from("expected `fingerprint` attribute in `OsMatch` node"))?.to_string();
+        let fingerprint = node
+            .attribute("fingerprint")
+            .ok_or_else(|| Error::from("expected `fingerprint` attribute in `OsMatch` node"))?
+            .to_string();
 
         Ok(Self { fingerprint })
     }
@@ -475,7 +485,7 @@ mod test {
         );
     }
 
-     #[test]
+    #[test]
     fn host_with_os() {
         let xml = r#"
 <host starttime="1589292535" endtime="1589292535">
