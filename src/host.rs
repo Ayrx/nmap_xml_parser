@@ -1,11 +1,9 @@
 //!Host related structs and enums.
+use crate::{port::PortInfo, Error};
 use roxmltree::Node;
 use std::net::IpAddr;
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
-
-use crate::port::PortInfo;
-use crate::Error;
 
 #[derive(Display, Clone, Debug, PartialEq)]
 pub enum Address {
@@ -22,6 +20,7 @@ pub struct Host {
     pub port_info: PortInfo,
     pub scan_start_time: Option<i64>,
     pub scan_end_time: Option<i64>,
+    pub os: Option<Os>,
 }
 
 impl Host {
@@ -47,6 +46,7 @@ impl Host {
         let mut port_info = Default::default();
         let mut scripts = Vec::new();
         let mut addresses = Vec::new();
+        let mut os = None;
 
         for child in node.children() {
             match child.tag_name().name() {
@@ -55,6 +55,7 @@ impl Host {
                 "hostnames" => host_names = parse_hostnames_node(child)?,
                 "hostscript" => scripts = parse_hostscript_node(child)?,
                 "ports" => port_info = PortInfo::parse(child)?,
+                "os" => os = Some(Os::parse(&child)?),
                 _ => {}
             }
         }
@@ -69,6 +70,7 @@ impl Host {
             port_info,
             scan_start_time,
             scan_end_time,
+            os,
         })
     }
 
@@ -233,6 +235,164 @@ impl Script {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Os {
+    pub portused: Vec<PortUsed>,
+    pub osmatch: Vec<OsMatch>,
+    pub osfingerprint: Vec<OsFingerprint>,
+}
+
+impl Os {
+    pub fn parse(node: &Node) -> Result<Self, Error> {
+        let mut portused = Vec::new();
+        let mut osmatch = Vec::new();
+        let mut osfingerprint = Vec::new();
+
+        for child in node.children() {
+            match child.tag_name().name() {
+                "portused" => portused.push(PortUsed::parse(&child)?),
+                "osmatch" => osmatch.push(OsMatch::parse(&child)?),
+                "osfingerprint" => osfingerprint.push(OsFingerprint::parse(&child)?),
+                _ => {}
+            }
+        }
+
+        Ok(Self {
+            portused,
+            osmatch,
+            osfingerprint,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct PortUsed {
+    pub state: String,
+    pub proto: String,
+    pub portid: String,
+}
+
+impl PortUsed {
+    pub fn parse(node: &Node) -> Result<Self, Error> {
+        let state = node
+            .attribute("state")
+            .ok_or_else(|| Error::from("expected `state` attribute in `portused` node"))?
+            .to_string();
+        let proto = node
+            .attribute("proto")
+            .ok_or_else(|| Error::from("expected `proto` attribute in `portused` node"))?
+            .to_string();
+        let portid = node
+            .attribute("portid")
+            .ok_or_else(|| Error::from("expected `portid` attribute in `portused` node"))?
+            .to_string();
+
+        Ok(Self {
+            state,
+            proto,
+            portid,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OsClass {
+    pub cpe: Vec<String>,
+    pub vendor: String,
+    pub os_gen: Option<String>,
+    pub os_type: Option<String>,
+    pub accuracy: String,
+    pub os_family: String,
+}
+
+impl OsClass {
+    pub fn from_node(node: &Node) -> Result<Self, Error> {
+        let cpe = node
+            .descendants()
+            .filter(|n| n.has_tag_name("cpe"))
+            .map(|n| n.text().unwrap().to_string())
+            .collect();
+
+        let vendor = node
+            .attribute("vendor")
+            .ok_or_else(|| Error::from("expected `vendor` attribute in `OsClass` node"))?
+            .to_string();
+        let os_gen = node.attribute("osgen").map(|s| s.to_string());
+        let os_type = node.attribute("type").map(|s| s.to_string());
+        let accuracy = node
+            .attribute("accuracy")
+            .ok_or_else(|| Error::from("expected `accuracy` attribute in `OsClass` node"))?
+            .to_string();
+        let os_family = node
+            .attribute("osfamily")
+            .ok_or_else(|| Error::from("expected `osfamily` attribute in `OsClass` node"))?
+            .to_string();
+
+        Ok(Self {
+            cpe,
+            vendor,
+            os_gen,
+            os_type,
+            accuracy,
+            os_family,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OsMatch {
+    pub osclass: Vec<OsClass>,
+    pub name: String,
+    pub accuracy: String,
+    pub line: String,
+}
+
+impl OsMatch {
+    pub fn parse(node: &Node) -> Result<Self, Error> {
+        let osclass = node
+            .children()
+            .filter(|n| n.has_tag_name("osclass"))
+            .map(|n| OsClass::from_node(&n).unwrap())
+            .collect();
+
+        let name = node
+            .attribute("name")
+            .ok_or_else(|| Error::from("expected `name` attribute in `OsMatch` node"))?
+            .to_string();
+        let accuracy = node
+            .attribute("accuracy")
+            .ok_or_else(|| Error::from("expected `accuracy` attribute in `OsMatch` node"))?
+            .to_string();
+        let line = node
+            .attribute("line")
+            .ok_or_else(|| Error::from("expected `line` attribute in `OsMatch` node"))?
+            .to_string();
+
+        Ok(Self {
+            osclass,
+            name,
+            accuracy,
+            line,
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OsFingerprint {
+    pub fingerprint: String,
+}
+
+impl OsFingerprint {
+    pub fn parse(node: &Node) -> Result<Self, Error> {
+        let fingerprint = node
+            .attribute("fingerprint")
+            .ok_or_else(|| Error::from("expected `fingerprint` attribute in `OsMatch` node"))?
+            .to_string();
+
+        Ok(Self { fingerprint })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -323,5 +483,32 @@ mod test {
             host_err.to_string(),
             "error parsing Nmap XML output: failed to parse host end time"
         );
+    }
+
+    #[test]
+    fn host_with_os() {
+        let xml = r#"
+<host starttime="1589292535" endtime="1589292535">
+    <status state="down" reason="no-response" reason_ttl="0"/>
+    <address addr="192.168.59.234" addrtype="ipv4"/>
+    <os><portused state="open" proto="tcp" portid="80"/>
+<osmatch name="Tomato 1.28 (Linux 2.4.20)" accuracy="100" line="46911">
+<osclass type="WAP" vendor="Linux" osfamily="Linux" osgen="2.4.X" accuracy="100"><cpe>cpe:/o:linux:linux_kernel:2.4.20</cpe></osclass>
+</osmatch>
+<osmatch name="Tomato firmware (Linux 2.6.22)" accuracy="100" line="61642">
+<osclass type="WAP" vendor="Linux" osfamily="Linux" osgen="2.6.X" accuracy="100"><cpe>cpe:/o:linux:linux_kernel:2.6.22</cpe></osclass>
+</osmatch>
+<osmatch name="Sony Ericsson U8i Vivaz mobile phone" accuracy="100" line="99093">
+<osclass type="phone" vendor="Sony Ericsson" osfamily="embedded" accuracy="100"><cpe>cpe:/h:sonyericsson:u8i_vivaz</cpe></osclass>
+</osmatch>
+</os>
+</host>
+        "#;
+        let doc = Document::parse(&xml).unwrap();
+        let ele = doc.root_element();
+        let host = Host::parse(ele).unwrap();
+        assert!(host.os.is_some());
+        assert_eq!(host.scan_start_time, Some(1589292535));
+        assert_eq!(host.scan_end_time, Some(1589292535));
     }
 }
